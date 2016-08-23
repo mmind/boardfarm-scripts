@@ -41,17 +41,17 @@ for i in `cat /home/devel/nfs/instances`; do
 	ARCH=`echo $i | cut -d ":" -f 2`
 	INST=`echo $i | cut -d ":" -f 1`
 
-	if [ -d /home/devel/nfs/$INST/lib/modules ]; then
+	if [ -d /home/devel/nfs/rootfs-$INST/lib/modules ]; then
 		set +e
-		rm -rf /home/devel/nfs/$INST/lib/modules/*
+		rm -rf /home/devel/nfs/rootfs-$INST/lib/modules/*
 		set -e
 	else
-		sudo mkdir /home/devel/nfs/$INST/lib/modules
-		sudo chown hstuebner.hstuebner /home/devel/nfs/$INST/lib/modules
+		sudo mkdir /home/devel/nfs/rootfs-$INST/lib/modules
+		sudo chown hstuebner.hstuebner /home/devel/nfs/rootfs-$INST/lib/modules
 	fi
 
 	echo "unpacking $ARCH modules for $INST"
-	tar -C /home/devel/nfs/$INST/lib/modules -xzf /home/devel/nfs/kernel/$ARCH/modules-$ARCH.tar.gz
+	tar -C /home/devel/nfs/rootfs-$INST/lib/modules -xzf /home/devel/nfs/kernel/$ARCH/modules-$ARCH.tar.gz
 done
 
 

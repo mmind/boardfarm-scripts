@@ -14,12 +14,12 @@ for i in `cat /home/devel/nfs/instances`; do
 	ARCH=`echo $i | cut -d ":" -f 2`
 	INST=`echo $i | cut -d ":" -f 1`
 
-	if [ ! -d /home/devel/nfs/$INST ]; then
+	if [ ! -d /home/devel/nfs/rootfs-$INST ]; then
 		echo "instace $INST not found"
 		exit 1
 	fi
 
-	BUILDPLACE=/home/devel/nfs/$INST
+	BUILDPLACE=/home/devel/nfs/rootfs-$INST
 	CHROOTEXEC="chroot $BUILDPLACE "
 
 	mountproc
