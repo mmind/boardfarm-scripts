@@ -1,0 +1,20 @@
+Bootfarm-side scripts
+=====================
+
+These scripts are expected to sit on the bootfarm serverboard
+in a static directory /home/devel/hstuebner/bootfarm currently.
+
+
+rebuild-netboot.sh:
+    Core script to rebuild all the netboot images and distribute
+    modules to the rootfs instances. rootfs instances are described
+    in a file /home/devel/nfs/instances as NAME:ARCH pairs with ARCH
+    being either arm32 or arm64 currently and the rootfs directories
+    being named /home/devel/nfs/rootfs-NAME.
+
+refresh-chroots.sh:
+    Uses parts of the Debian pbuilder code to open the rootfs
+    instances as chroots and refresh the packages in them.
+    Expects qemu-user-static to be installed and everything
+    hooked into binfmt already, so that even non-native
+    architectures can do that.
