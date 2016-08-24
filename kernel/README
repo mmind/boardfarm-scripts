@@ -1,0 +1,41 @@
+Kernel-side scripts
+===================
+
+These scripts are used for the host-side of my kernel building and
+distribution. They help in building the kernels, modules and devicetrees
+used for my bootfarm and also in patch maintenance.
+
+They currently expect to be dumped into a __maintainer-scripts subdir
+below the kernel source directory.
+
+
+Build-scripts
+-------------
+
+build_full.sh: full build of arm32 and arm64 and bootfarm triggering
+build_localimages.sh: build local images from build-result, used for
+                      actually usable devices not part of the bootfarm
+
+build_arm32.sh: arm32-specific subset of build_full.sh. Allows one parameter,
+                a defconfig to build; defaults to oldconfig
+build_arm64.sh: arm64-specific subset of build_full.sh. Allows one parameter,
+                a defconfig to build; defaults to oldconfig
+build_dtbs.sh: only build and distribute new devicetree files
+
+build_clean.sh: cleanup build directories
+
+
+For-Next scripts
+----------------
+
+Help in maintaining my for-next branch.
+I use kernel-version-specific branches, i.e. v4.9-armsoc/dts32 etc, so
+
+create_for-next.sh: one parameter, the version-prefix i.e. v4.9. Merges all
+                    matching branches not named *shared* into an existing
+                    for-next branch.
+
+recreate_for-next.sh: recreates the for-next branch. Takes two parameters.
+                      First is the version-prefix explained above and second
+                      is the offset to start from, like v4.3-rc1 and defaults
+                      to simply "master".
