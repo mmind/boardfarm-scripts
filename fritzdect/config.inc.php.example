@@ -1,0 +1,10 @@
+<?php
+
+/* fritz.box host ip */
+$host = "192.168.178.1";
+
+/* it's smart to create a separate limited user account for this */
+$user = "username";
+$pass = "password";
+
+?>
