@@ -306,6 +306,7 @@ setup_imagedata() {
 # Generates a coreboot partition image for ChromeOS devices.
 #
 # $1: image name
+# $2: architecture (arm32, arm64)
 #
 generate_chromeos_image() {
 	mkimage -f _bootfarm/images/$1-kernel.its _bootfarm/images/tmp/$1-vmlinux.uimg > /dev/null
@@ -323,6 +324,39 @@ generate_chromeos_image() {
 }
 
 #
+# Generates a legacy image for Rockchip devices.
+# This means concatenating the dtb to the kernel and running rkcrc on it.
+# FIXME: Legacy arm64 images might need more work, as they use separate
+# devicetrees already, albeit in some different storage form.
+#
+# $1: image name
+# $2: architecture (arm32, arm64)
+#
+generate_legacy_image() {
+	INST=$1
+	ARCH=$2
+
+	case "$ARCH" in
+		arm32)
+			KERNELIMAGE=zImage
+			;;
+		arm64)
+			KERNELIMAGE=Image
+			;;
+		*)
+			echo "unsupported architecture $ARCH"
+			exit 1
+			;;
+	esac
+
+	DTB=`find _bootfarm/images/arm32/dtbs/ | grep $INST | grep dtb` || exit 1
+
+	cat _bootfarm/images/$ARCH/$KERNELIMAGE $DTB > _bootfarm/images/tmp/$INST.krnl
+	rkcrc -k _bootfarm/images/tmp/$INST.krnl _bootfarm/images/out/$INST-legacy.img
+	rm _bootfarm/images/tmp/$INST.krnl
+}
+
+#
 # Generate all images from the image list
 # Essentially just calls the correct image generation function.
 #
@@ -334,6 +368,6 @@ generate_images() {
 
 		echo "building local $LDR-image for $INST"
 
-		generate_${LDR}_image jerry
+		generate_${LDR}_image $INST $ARCH
 	done
 }
