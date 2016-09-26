@@ -37,7 +37,7 @@ build_netboot arm32 rock
 build_uimage_netboot rk3036 kylin
 
 # extract modules into nfsroot instances
-for i in `cat /home/devel/nfs/instances`; do
+for i in `cat /home/devel/nfs/instances | grep -v "^#"`; do
 	ARCH=`echo $i | cut -d ":" -f 2`
 	INST=`echo $i | cut -d ":" -f 1`
 

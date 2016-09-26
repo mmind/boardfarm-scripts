@@ -10,7 +10,7 @@ USERUNSHM=yes
 # use pbuilder modules for common chroot tasks
 . /usr/lib/pbuilder/pbuilder-modules
 
-for i in `cat /home/devel/nfs/instances`; do
+for i in `cat /home/devel/nfs/instances | grep -v "^#"`; do
 	ARCH=`echo $i | cut -d ":" -f 2`
 	INST=`echo $i | cut -d ":" -f 1`
 
