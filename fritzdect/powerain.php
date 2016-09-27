@@ -1,0 +1,28 @@
+#!/usr/bin/php5
+<?php
+require_once(dirname(__FILE__)."/avmaha.inc.php");
+require_once(dirname(__FILE__)."/cmdbase.inc.php");
+require_once(dirname(__FILE__)."/config.inc.php");
+
+$params = CmdBase::ParseParams(array());
+if (!isset($params["_"])) {
+    echo "missing new state\n";
+    exit;
+}
+if (count($params["_"]) > 2) {
+    echo "to many params\n";
+    exit;
+}
+
+if (count($params["_"]) < 2) {
+    echo "to few params\n";
+    exit;
+}
+
+$ain = $params["_"][0];
+$newState = $params["_"][1];
+
+$c = new AVMAHA($host, $user, $pass);
+$c->SetSwitchState($ain, $newState);
+
+?>
