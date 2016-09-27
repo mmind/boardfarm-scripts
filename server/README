@@ -5,6 +5,12 @@ These scripts are expected to sit on the bootfarm serverboard
 in a static directory /home/devel/hstuebner/bootfarm currently.
 
 
+power-board.sh:
+    Script to abstract handling of all the different power-state
+    methods (ykush, fritzdect, servo, etc). Reads board data from
+    /home/devel/nfs/instances which now also contains infos on how
+    its power-handling is done.
+
 rebuild-netboot.sh:
     Core script to rebuild all the netboot images and distribute
     modules to the rootfs instances. rootfs instances are described
