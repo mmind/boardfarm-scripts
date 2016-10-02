@@ -20,13 +20,13 @@ for i in `cat /home/devel/nfs/instances | grep -v "^#"`; do
 			# if we want to do a state change
 			if [ "$numarg" = "2" ]; then
 				if [ "$newstate" = "1" ]; then
-					ykush -s $PWRDEVICE -u $PWRINDEX 2>/dev/null
+					ykush -s $PWRDEVICE -u $((PWRINDEX + 1)) 2>/dev/null
 				else
-					ykush -s $PWRDEVICE -d $PWRINDEX 2>/dev/null
+					ykush -s $PWRDEVICE -d $((PWRINDEX + 1)) 2>/dev/null
 				fi
 			fi
 
-			tmp=`ykush -s $PWRDEVICE -g $PWRINDEX 2>/dev/null | grep "Downstream port" | cut -d ":" -f 2`
+			tmp=`ykush -s $PWRDEVICE -g $((PWRINDEX + 1)) 2>/dev/null | grep "Downstream port" | cut -d ":" -f 2`
 			if [ "$tmp" = " DOWN" ]; then
 				state="off"
 			else
