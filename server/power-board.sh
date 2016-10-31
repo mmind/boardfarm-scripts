@@ -46,6 +46,19 @@ for i in `cat /home/devel/nfs/instances | grep -v "^#"`; do
 				state="off"
 			fi
 			;;
+		"servo")
+			if [ "$numarg" = "2" ]; then
+				if [ "$newstate" = "1" ]; then
+					/usr/bin/dut-control -p $PWRDEVICE cold_reset:on
+					sleep 1
+					/usr/bin/dut-control -p $PWRDEVICE cold_reset:off
+				else
+					/usr/bin/dut-control -p $PWRDEVICE power_state:off
+				fi
+			fi
+
+			state="unknown"
+			;;
 		*)
 			echo "unknown method $PWRMETHOD"
 			exit 1
