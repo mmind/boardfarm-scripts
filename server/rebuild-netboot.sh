@@ -28,6 +28,7 @@ tar -C /home/devel/nfs/kernel/$ARCH/dtbs -xzf /home/devel/nfs/kernel/$ARCH/dtbs-
 ARCH=arm64
 tar -C /home/devel/nfs/kernel/$ARCH/dtbs -xzf /home/devel/nfs/kernel/$ARCH/dtbs-$ARCH.tar.gz
 
+build_netboot arm64 gru
 build_netboot arm64 r88
 build_netboot arm64 rk3399evb
 build_netboot arm32 pinky
