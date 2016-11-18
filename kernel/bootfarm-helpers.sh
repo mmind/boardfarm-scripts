@@ -356,6 +356,17 @@ generate_legacy_image() {
 	rm _bootfarm/images/tmp/$INST.krnl
 }
 
+generate_legacy64_image() {
+	INST=$1
+	ARCH=$2
+
+	KERNELIMAGE=Image
+	DTB=`find _bootfarm/images/arm64/dtbs/ | grep $INST | grep dtb` || exit 1
+
+	_bootfarm/bin/resource_tool --pack --image=_bootfarm/images/out/$INST-resource.img $DTB
+	rkcrc -k _bootfarm/images/$ARCH/$KERNELIMAGE _bootfarm/images/out/$INST-kernel.img
+}
+
 #
 # Generate all images from the image list
 # Essentially just calls the correct image generation function.
