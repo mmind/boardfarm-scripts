@@ -33,9 +33,9 @@ build_kernel() {
 		conf=$2
 	fi
 
-	make ARCH=$KERNELARCH CROSS_COMPILE=$CROSS O=_build-$1 $conf
-	make ARCH=$KERNELARCH CROSS_COMPILE=$CROSS O=_build-$1 -j8 $IMAGE
-	make ARCH=$KERNELARCH CROSS_COMPILE=$CROSS O=_build-$1 -j8 modules
+	make ARCH=$KERNELARCH CROSS_COMPILE=$CROSS KCPPFLAGS="-fno-pic -Wno-pointer-sign" O=_build-$1 $conf
+	make ARCH=$KERNELARCH CROSS_COMPILE=$CROSS KCPPFLAGS="-fno-pic -Wno-pointer-sign" O=_build-$1 -j8 $IMAGE
+	make ARCH=$KERNELARCH CROSS_COMPILE=$CROSS KCPPFLAGS="-fno-pic -Wno-pointer-sign" O=_build-$1 -j8 modules
 	build_dtbs $1
 }
 
