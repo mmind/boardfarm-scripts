@@ -28,18 +28,12 @@ tar -C /home/devel/nfs/kernel/$ARCH/dtbs -xzf /home/devel/nfs/kernel/$ARCH/dtbs-
 ARCH=arm64
 tar -C /home/devel/nfs/kernel/$ARCH/dtbs -xzf /home/devel/nfs/kernel/$ARCH/dtbs-$ARCH.tar.gz
 
-build_netboot arm64 gru
-build_netboot arm64 r88
-build_netboot arm64 rk3399evb
-build_netboot arm32 pinky
-build_netboot arm32 brain
-build_netboot arm32 rock
-build_netboot arm32 kylin
-
 # extract modules into nfsroot instances
 for i in `cat /home/devel/nfs/instances | grep -v "^#"`; do
 	ARCH=`echo $i | cut -d ":" -f 2`
 	INST=`echo $i | cut -d ":" -f 1`
+
+	build_netboot $ARCH $INST
 
 	if [ -d /home/devel/nfs/rootfs-$INST/lib/modules ]; then
 		set +e
