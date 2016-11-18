@@ -95,6 +95,16 @@ clean_kernel() {
 	make ARCH=$KERNELARCH CROSS_COMPILE=$CROSS O=_build-$1 clean
 }
 
+install_setup() {
+	if [ ! -d _bootfarm ]; then
+		mkdir _bootfarm
+	fi
+
+	if [ ! -d _bootfarm/$1 ]; then
+		mkdir _bootfarm/$1
+	fi
+}
+
 #
 # Install Kernel and modules for build-directory
 # This will copy the kernel, tar up the modules and copy them
@@ -106,6 +116,8 @@ clean_kernel() {
 # $1: target arch (arm32, arm64)
 #
 install_kernel() {
+	install_setup $1
+
 	case "$1" in
 		arm32)
 			KERNELARCH=arm
@@ -200,6 +212,8 @@ install_kernel() {
 # example: install_dtbs arm64 "rk msm89"
 # 
 install_dtbs() {
+	install_setup $1
+
 	case "$1" in
 		arm32)
 			KERNELARCH=arm
