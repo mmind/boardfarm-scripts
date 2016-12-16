@@ -22,6 +22,11 @@ build_netboot() {
 	rm /home/devel/nfs/kernel/tmp/$2-vmlinux.uimg
 }
 
+if [ "$#" = "1" ]; then
+	TARGET=$1
+else
+	TARGET="*"
+fi
 
 ARCH=arm32
 tar -C /home/devel/nfs/kernel/$ARCH/dtbs -xzf /home/devel/nfs/kernel/$ARCH/dtbs-$ARCH.tar.gz
@@ -32,6 +37,11 @@ tar -C /home/devel/nfs/kernel/$ARCH/dtbs -xzf /home/devel/nfs/kernel/$ARCH/dtbs-
 for i in `cat /home/devel/nfs/instances | grep -v "^#"`; do
 	ARCH=`echo $i | cut -d ":" -f 2`
 	INST=`echo $i | cut -d ":" -f 1`
+
+	if [ "$TARGET" != "*" ] && [ "$TARGET" != "$ARCH" ]; then
+		echo "skipping image for $INST ($ARCH != $TARGET)"
+		continue
+	fi
 
 	build_netboot $ARCH $INST
 
