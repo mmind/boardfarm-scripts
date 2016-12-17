@@ -1,4 +1,4 @@
-#!/usr/bin/php5
+#!/usr/bin/php
 <?php
 require_once(dirname(__FILE__)."/avmaha.inc.php");
 require_once(dirname(__FILE__)."/cmdbase.inc.php");
