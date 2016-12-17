@@ -278,6 +278,11 @@ install_dtbs() {
 # instances listed on the bootfarm
 #
 trigger_bootfarm() {
+	if [ $# = "1" ]; then
+		ARCH=$1
+	else
+		ARCH="*"
+	fi
 	set +e
 	ping -c 1 $bootfarmip >/dev/null
 	err=$?
@@ -285,7 +290,7 @@ trigger_bootfarm() {
 	if [ "x$err" != "x0" ]; then
 		echo "bootfarm not online - not refreshing"
 	else
-		ssh $bootfarmip "/home/devel/hstuebner/bootfarm/server/rebuild-netboot.sh"
+		ssh $bootfarmip "/home/devel/hstuebner/bootfarm/server/rebuild-netboot.sh $ARCH"
 	fi
 }
 

@@ -6,4 +6,4 @@ build_kernel arm32 $1
 install_kernel arm32
 install_dtbs arm32 "rk"
 
-trigger_bootfarm
+trigger_bootfarm arm32

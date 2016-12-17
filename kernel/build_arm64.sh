@@ -6,4 +6,4 @@ build_kernel arm64 $1
 install_kernel arm64
 install_dtbs arm64 "rk"
 
-trigger_bootfarm
+trigger_bootfarm arm64
