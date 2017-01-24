@@ -58,6 +58,12 @@ for i in `cat /home/devel/nfs/instances | grep -v "^#"`; do
 			fi
 
 			state="unknown"
+			tmp=`/usr/bin/dut-control -p $PWRDEVICE spi_hold | grep "spi_hold" | cut -d ":" -f 2`
+			if [ "$tmp" = "off" ]; then
+				state="on"
+			else
+				state="off"
+			fi
 			;;
 		*)
 			echo "unknown method $PWRMETHOD"
