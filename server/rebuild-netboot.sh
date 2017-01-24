@@ -22,16 +22,23 @@ build_netboot() {
 	rm /home/devel/nfs/kernel/tmp/$2-vmlinux.uimg
 }
 
+extract_dtbs() {
+	ARCH=$1
+	if [ ! -d /home/devel/nfs/kernel/$ARCH/dtbs ]; then
+		mkdir /home/devel/nfs/kernel/$ARCH/dtbs
+	fi
+
+	tar -C /home/devel/nfs/kernel/$ARCH/dtbs -xzf /home/devel/nfs/kernel/$ARCH/dtbs-$ARCH.tar.gz
+}
+
 if [ "$#" = "1" ]; then
 	TARGET=$1
 else
 	TARGET="*"
 fi
 
-ARCH=arm32
-tar -C /home/devel/nfs/kernel/$ARCH/dtbs -xzf /home/devel/nfs/kernel/$ARCH/dtbs-$ARCH.tar.gz
-ARCH=arm64
-tar -C /home/devel/nfs/kernel/$ARCH/dtbs -xzf /home/devel/nfs/kernel/$ARCH/dtbs-$ARCH.tar.gz
+extract_dtbs arm32
+extract_dtbs arm64
 
 # extract modules into nfsroot instances
 for i in `cat /home/devel/nfs/instances | grep -v "^#"`; do
