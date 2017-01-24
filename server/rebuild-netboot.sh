@@ -45,7 +45,7 @@ for i in `cat /home/devel/nfs/instances | grep -v "^#"`; do
 	ARCH=`echo $i | cut -d ":" -f 2`
 	INST=`echo $i | cut -d ":" -f 1`
 
-	if [ "$TARGET" != "*" ] && [ "$TARGET" != "$ARCH" ]; then
+	if [ "$TARGET" != "*" ] && [ "$TARGET" != "$ARCH" ] && [ "$TARGET" != "$INST" ]; then
 		echo "skipping image for $INST ($ARCH != $TARGET)"
 		continue
 	fi
