@@ -10,9 +10,9 @@ USERUNSHM=yes
 # use pbuilder modules for common chroot tasks
 . /usr/lib/pbuilder/pbuilder-modules
 
-for i in `cat /home/devel/nfs/instances | grep -v "^#"`; do
-	ARCH=`echo $i | cut -d ":" -f 2`
-	INST=`echo $i | cut -d ":" -f 1`
+update_chroot() {
+	ARCH=$1
+	INST=$2
 
 	if [ ! -d /home/devel/nfs/rootfs-$INST ]; then
 		echo "instace $INST not found"
@@ -33,6 +33,18 @@ for i in `cat /home/devel/nfs/instances | grep -v "^#"`; do
 
 	set -e
 	umountproc
+}
+
+#update source repos
+update_chroot arm64 arm64-base
+update_chroot arm32 armhf-base
+
+#update real instances
+for i in `cat /home/devel/nfs/instances | grep -v "^#"`; do
+	ARCH=`echo $i | cut -d ":" -f 2`
+	INST=`echo $i | cut -d ":" -f 1`
+
+	update_chroot $ARCH $INST
 done
 
 echo "all package updates done"
