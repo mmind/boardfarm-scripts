@@ -22,6 +22,14 @@ build_netboot() {
 	rm /home/devel/nfs/kernel/tmp/$2-vmlinux.uimg
 }
 
+build_cmdscr() {
+	if [ -f /home/devel/tftp/hstuebner/$2.cmd ]; then
+		echo "setenv bootargs `cat /home/devel/tftp/hstuebner/$2.cmd`" > /home/devel/tftp/hstuebner/$2.bootargs
+		mkimage -T script -C none -n 'Set bootargs' -d /home/devel/tftp/hstuebner/$2.bootargs /home/devel/tftp/hstuebner/$2.scr >/dev/null
+		rm /home/devel/tftp/hstuebner/$2.bootargs
+	fi
+}
+
 extract_dtbs() {
 	ARCH=$1
 	if [ ! -d /home/devel/nfs/kernel/$ARCH/dtbs ]; then
@@ -51,6 +59,7 @@ for i in `cat /home/devel/nfs/instances | grep -v "^#"`; do
 	fi
 
 	build_netboot $ARCH $INST
+	build_cmdscr $ARCH $INST
 
 	if [ -d /home/devel/nfs/rootfs-$INST/lib/modules ]; then
 		set +e
