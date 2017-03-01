@@ -17,7 +17,7 @@ build_uimage_netboot() {
 
 build_netboot() {
 	echo "building netboot image for $2"
-	mkimage -f /home/devel/nfs/kernel/$2-kernel.its /home/devel/nfs/kernel/tmp/$2-vmlinux.uimg > /dev/null
+	mkimage -D "-q" -f /home/devel/nfs/kernel/$2-kernel.its /home/devel/nfs/kernel/tmp/$2-vmlinux.uimg > /dev/null
 	cp /home/devel/nfs/kernel/tmp/$2-vmlinux.uimg /home/devel/tftp/hstuebner/$2.vmlinuz
 	rm /home/devel/nfs/kernel/tmp/$2-vmlinux.uimg
 }
