@@ -48,7 +48,7 @@ unpack_modules() {
 		echo "unpacking $INST modules for $TARGET"
 		tar -C $TARGET/lib/modules -xzf /home/devel/nfs/kernel/$INST/modules-$INST.tar.gz
 	else
-		echo "unpacking $ARCH modules for $INST"
+		echo "unpacking $ARCH modules for $TARGET"
 		tar -C $TARGET/lib/modules -xzf /home/devel/nfs/kernel/$ARCH/modules-$ARCH.tar.gz
 	fi
 }
