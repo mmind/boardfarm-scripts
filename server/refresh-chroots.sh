@@ -11,8 +11,8 @@ USERUNSHM=yes
 . /usr/lib/pbuilder/pbuilder-modules
 
 update_chroot() {
-	ARCH=$1
-	INST=$2
+	local ARCH=$1
+	local INST=$2
 
 	if [ ! -d /home/devel/nfs/rootfs-$INST ]; then
 		echo "instace $INST not found"

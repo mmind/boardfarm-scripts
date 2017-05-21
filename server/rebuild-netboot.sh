@@ -2,7 +2,7 @@
 
 # FIXME: move to FIT image
 build_uimage() {
-	ARCH=arm32
+	local ARCH=arm32
 	echo "building $1-$2"
 	#mkimage -f kylin-kernel.its kylin-vmlinux.uimg > /dev/null
 
@@ -31,7 +31,7 @@ build_cmdscr() {
 }
 
 extract_dtbs() {
-	ARCH=$1
+	local ARCH=$1
 	if [ ! -d /home/devel/nfs/kernel/$ARCH/dtbs ]; then
 		mkdir /home/devel/nfs/kernel/$ARCH/dtbs
 	fi
