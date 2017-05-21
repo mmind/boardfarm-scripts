@@ -39,6 +39,20 @@ extract_dtbs() {
 	tar -C /home/devel/nfs/kernel/$ARCH/dtbs -xzf /home/devel/nfs/kernel/$ARCH/dtbs-$ARCH.tar.gz
 }
 
+unpack_modules() {
+	local ARCH=$1
+	local INST=$2
+	local TARGET=$3
+
+	if [ -d /home/devel/nfs/kernel/$INST ]; then
+		echo "unpacking $INST modules for $TARGET"
+		tar -C $TARGET/lib/modules -xzf /home/devel/nfs/kernel/$INST/modules-$INST.tar.gz
+	else
+		echo "unpacking $ARCH modules for $INST"
+		tar -C $TARGET/lib/modules -xzf /home/devel/nfs/kernel/$ARCH/modules-$ARCH.tar.gz
+	fi
+}
+
 if [ "$#" = "1" ]; then
 	TARGET=$1
 else
@@ -70,13 +84,7 @@ for i in `cat /home/devel/nfs/instances | grep -v "^#"`; do
 		sudo chown hstuebner.hstuebner /home/devel/nfs/rootfs-$INST/lib/modules
 	fi
 
-	if [ -d /home/devel/nfs/kernel/$INST ]; then
-		echo "unpacking $INST modules for $INST"
-		tar -C /home/devel/nfs/rootfs-$INST/lib/modules -xzf /home/devel/nfs/kernel/$INST/modules-$INST.tar.gz
-	else
-		echo "unpacking $ARCH modules for $INST"
-		tar -C /home/devel/nfs/rootfs-$INST/lib/modules -xzf /home/devel/nfs/kernel/$ARCH/modules-$ARCH.tar.gz
-	fi
+	unpack_modules $ARCH $INST /home/devel/nfs/rootfs-$INST
 done
 
 
