@@ -72,9 +72,6 @@ for i in `cat /home/devel/nfs/instances | grep -v "^#"`; do
 		continue
 	fi
 
-	build_netboot $ARCH $INST
-	build_cmdscr $ARCH $INST
-
 	if [ -d /home/devel/nfs/rootfs-$INST/lib/modules ]; then
 		set +e
 		rm -rf /home/devel/nfs/rootfs-$INST/lib/modules/*
@@ -85,6 +82,9 @@ for i in `cat /home/devel/nfs/instances | grep -v "^#"`; do
 	fi
 
 	unpack_modules $ARCH $INST /home/devel/nfs/rootfs-$INST
+
+	build_netboot $ARCH $INST
+	build_cmdscr $ARCH $INST
 done
 
 
