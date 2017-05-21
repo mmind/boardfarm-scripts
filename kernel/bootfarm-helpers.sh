@@ -140,6 +140,7 @@ install_kernel() {
 	fi
 
 	cp _build-$1/arch/$KERNELARCH/boot/$KERNELIMAGE _bootfarm/$1
+	cp _build-$1/include/config/kernel.release _bootfarm/$1
 
 	if [ -d _bootfarm/$1/lib ]; then
 		rm -r _bootfarm/$1/lib
@@ -180,6 +181,7 @@ install_kernel() {
 		# copy kernel to bootfarm and keep a copy for future diffing
 		if [ "$skip" = "no" ]; then
 			scp -C _bootfarm/$1/$KERNELIMAGE $bootfarmip:/home/devel/nfs/kernel/$1
+			scp -C _bootfarm/$1/kernel.release $bootfarmip:/home/devel/nfs/kernel/$1
 			cp _bootfarm/$1/$KERNELIMAGE _bootfarm/$1/$KERNELIMAGE.bootfarm
 		fi
 
