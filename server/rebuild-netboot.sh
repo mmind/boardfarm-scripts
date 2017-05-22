@@ -83,6 +83,11 @@ for i in `cat /home/devel/nfs/instances | grep -v "^#"`; do
 
 	unpack_modules $ARCH $INST /home/devel/nfs/rootfs-$INST
 
+	# only build initramfs for arm64 for now
+	if [ "$ARCH" = "arm64" ]; then
+		sudo /home/devel/hstuebner/bootfarm/server/rebuild-initramfs.sh $ARCH $INST
+	fi
+
 	build_netboot $ARCH $INST
 	build_cmdscr $ARCH $INST
 done

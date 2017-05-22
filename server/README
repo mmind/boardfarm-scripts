@@ -11,6 +11,13 @@ power-board.sh:
     /home/devel/nfs/instances which now also contains infos on how
     its power-handling is done.
 
+rebuild-initramfs.sh:
+    Script to create an initramfs matching the rootfs with newly
+    installed modules. Chroots into the rootfs and calls
+    update-initramfs for the new kernel version.
+    May require a separate NOPASSWD sudoers entry to run non-
+    interactively.
+
 rebuild-netboot.sh:
     Core script to rebuild all the netboot images and distribute
     modules to the rootfs instances. rootfs instances are described
