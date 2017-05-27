@@ -2,11 +2,24 @@
 
 . __maintainer-scripts/bootfarm-helpers.sh
 
-build_dtbs arm32
-build_dtbs arm64
+if [ "x$1" = "x" ]; then
+	target="all"
+else
+	target=$1
+fi
 
-install_dtbs arm32 "rk"
-install_dtbs arm64 "rk"
-#install_dtbs arm64 "rk msm89"
+for arch in arm32 arm64; do
+	if [ "$arch" != "$target" ]; then
+		echo "skipping $arch, not target $target"
+		continue
+	fi
 
-trigger_bootfarm
+	build_dtbs $arch
+	install_dtbs $arch "rk"
+done
+
+if [ "$target" != "all" ]; then
+    trigger_bootfarm $target
+else
+    trigger_bootfarm
+fi
