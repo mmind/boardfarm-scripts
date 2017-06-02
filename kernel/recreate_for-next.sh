@@ -2,7 +2,7 @@
 
 if [ "x$1" = "x" ]; then
 	echo "missing version argument"
-	echo "usage: recreate_for-next.sh v4.6"
+	echo "usage: recreate_for-next.sh branchprefix [gitrev=master]"
 	exit 1
 fi
 
