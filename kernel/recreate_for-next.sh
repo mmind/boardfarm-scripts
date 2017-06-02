@@ -26,7 +26,8 @@ else
 	gitrev=$2
 fi
 
-git checkout $gitrev
-git branch -D for-next
-git checkout -b for-next
+echo "creating new for-next based on $gitrev"
+git checkout $gitrev >/dev/null
+git branch -D for-next >/dev/null
+git checkout -b for-next >/dev/null
 $PWD/create_for-next.sh $1

@@ -8,7 +8,7 @@ fi
 
 git checkout for-next
 for i in `git branch | grep "$1" | grep -v "shared"`; do
-	echo $i
-	git merge --no-edit --no-ff $i
+	echo "merging $i"
+	git merge --no-edit --no-ff $i > /dev/null
 done
 
