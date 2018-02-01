@@ -9,7 +9,7 @@ else
 fi
 
 for arch in arm32 arm64; do
-	if [ "$arch" != "$target" ]; then
+	if [ "$target" != "all" ] && [ "$arch" != "$target" ]; then
 		echo "skipping $arch, not target $target"
 		continue
 	fi
