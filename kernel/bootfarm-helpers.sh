@@ -10,6 +10,11 @@ bootfarmip=192.168.140.1
 # $2: config to build (default oldconfig)
 #
 build_kernel() {
+	ICECC_VERSION=`pwd`/__maintainer-scripts/toolchains/gcc7-amd64.tar.gz
+	ICECC_VERSION=$ICECC_VERSION,`pwd`/__maintainer-scripts/toolchains/gcc7-armhf.tar.gz=arm-linux-gnueabihf
+	ICECC_VERSION=$ICECC_VERSION,`pwd`/__maintainer-scripts/toolchains/gcc7-aarch64.tar.gz=aarch64-linux-gnu
+	export ICECC_VERSION
+
 	case "$1" in
 		arm32)
 			KERNELARCH=arm
@@ -33,9 +38,14 @@ build_kernel() {
 		conf=$2
 	fi
 
+	if [ -d /usr/lib/icecc ] && [ -f __maintainer-scripts/toolchains/gcc7-amd64.tar.gz ]; then
+		echo "using icecc"
+		export PATH=/usr/lib/icecc/bin:$PATH
+	fi
+
 	make ARCH=$KERNELARCH CROSS_COMPILE=$CROSS KCPPFLAGS="-fno-pic -Wno-pointer-sign" O=_build-$1 $conf
-	make ARCH=$KERNELARCH CROSS_COMPILE=$CROSS KCPPFLAGS="-fno-pic -Wno-pointer-sign" O=_build-$1 -j8 $IMAGE
-	make ARCH=$KERNELARCH CROSS_COMPILE=$CROSS KCPPFLAGS="-fno-pic -Wno-pointer-sign" O=_build-$1 -j8 modules
+	make ARCH=$KERNELARCH CROSS_COMPILE=$CROSS KCPPFLAGS="-fno-pic -Wno-pointer-sign" O=_build-$1 -j14 $IMAGE
+	make ARCH=$KERNELARCH CROSS_COMPILE=$CROSS KCPPFLAGS="-fno-pic -Wno-pointer-sign" O=_build-$1 -j14 modules
 	build_dtbs $1
 }
 
