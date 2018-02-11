@@ -72,6 +72,11 @@ for i in `cat /home/devel/nfs/instances | grep -v "^#"`; do
 		continue
 	fi
 
+	if [ ! -d /home/devel/nfs/rootfs-$INST ]; then
+		echo "skipping image for $INST (no rootfs)"
+		continue
+	fi
+
 	if [ -d /home/devel/nfs/rootfs-$INST/lib/modules ]; then
 		set +e
 		rm -rf /home/devel/nfs/rootfs-$INST/lib/modules/*
