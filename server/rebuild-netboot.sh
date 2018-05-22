@@ -16,10 +16,12 @@ build_uimage_netboot() {
 }
 
 build_netboot() {
-	echo "building netboot image for $2"
-	mkimage -D "-q" -f /home/devel/nfs/kernel/$2-kernel.its /home/devel/nfs/kernel/tmp/$2-vmlinux.uimg > /dev/null
-	cp /home/devel/nfs/kernel/tmp/$2-vmlinux.uimg /home/devel/tftp/hstuebner/$2.vmlinuz
-	rm /home/devel/nfs/kernel/tmp/$2-vmlinux.uimg
+	local INST=$2
+
+	echo "$INST: building netboot image"
+	mkimage -D "-q" -f /home/devel/nfs/kernel/$INST-kernel.its /home/devel/nfs/kernel/tmp/$INST-vmlinux.uimg > /dev/null
+	cp /home/devel/nfs/kernel/tmp/$INST-vmlinux.uimg /home/devel/tftp/hstuebner/$INST.vmlinuz
+	rm /home/devel/nfs/kernel/tmp/$INST-vmlinux.uimg
 }
 
 build_cmdscr() {
@@ -45,10 +47,10 @@ unpack_modules() {
 	local TARGET=$3
 
 	if [ -d /home/devel/nfs/kernel/$INST ]; then
-		echo "unpacking $INST modules for $TARGET"
+		echo "$INST: unpacking special modules"
 		tar -C $TARGET/lib/modules -xzf /home/devel/nfs/kernel/$INST/modules-$INST.tar.gz
 	else
-		echo "unpacking $ARCH modules for $TARGET"
+		echo "$INST: unpacking $ARCH modules"
 		tar -C $TARGET/lib/modules -xzf /home/devel/nfs/kernel/$ARCH/modules-$ARCH.tar.gz
 	fi
 }
@@ -68,12 +70,12 @@ for i in `cat /home/devel/nfs/instances | grep -v "^#"`; do
 	INST=`echo $i | cut -d ":" -f 1`
 
 	if [ "$TARGET" != "*" ] && [ "$TARGET" != "$ARCH" ] && [ "$TARGET" != "$INST" ]; then
-		echo "skipping image for $INST ($ARCH != $TARGET)"
+		echo "$INST: skipping image ($ARCH != $TARGET)"
 		continue
 	fi
 
 	if [ ! -d /home/devel/nfs/rootfs-$INST ]; then
-		echo "skipping image for $INST (no rootfs)"
+		echo "$INST: skipping image (no rootfs)"
 		continue
 	fi
 
@@ -96,5 +98,3 @@ for i in `cat /home/devel/nfs/instances | grep -v "^#"`; do
 	build_netboot $ARCH $INST
 	build_cmdscr $ARCH $INST
 done
-
-

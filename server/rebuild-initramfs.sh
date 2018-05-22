@@ -6,26 +6,26 @@ build_initramfs() {
 	local BUILDPLACE=/home/devel/nfs/rootfs-$INST
 
 	if [ ! -d $BUILDPLACE ]; then
-		echo "instace $INST not found"
+		echo "$INST: instance not found"
 		exit 1
 	fi
 
 	if [ ! -f /home/devel/nfs/kernel/$ARCH/kernel.release ]; then
-		echo "kernel.release missing"
+		echo "$ARCH: kernel.release missing"
 		exit 1
 	fi
 
 	local KVER=`cat /home/devel/nfs/kernel/$ARCH/kernel.release`
 	local CHROOTEXEC="/usr/sbin/chroot $BUILDPLACE "
 
-	echo "Updating initramfs of $INST $KVER"
+	echo "$INST: creating initramfs for $KVER"
 	set +e
-	$CHROOTEXEC update-initramfs -d -k $KVER
+	$CHROOTEXEC update-initramfs -d -k $KVER >/dev/null 2>&1
 	set -e
-	$CHROOTEXEC update-initramfs -c -k $KVER
+	$CHROOTEXEC update-initramfs -c -k $KVER >/dev/null
 
 	if [ ! -f $BUILDPLACE/boot/initrd.img-$KVER ]; then
-		echo "initramfs creation failed"
+		echo "$INST: initramfs creation failed"
 		exit 1
 	fi
 
