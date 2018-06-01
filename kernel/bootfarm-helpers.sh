@@ -1,6 +1,26 @@
 
 bootfarmip=192.168.140.1
 
+create_icecc_env() {
+	HOSTARCH=`uname -m`
+
+	case "$HOSTARCH" in
+		x86_64)
+			ICECC_VERSION=`pwd`/__maintainer-scripts/toolchains/gcc7-amd64.tar.gz
+			ICECC_VERSION=$ICECC_VERSION,`pwd`/__maintainer-scripts/toolchains/gcc7-armhf.tar.gz=arm-linux-gnueabihf
+			ICECC_VERSION=$ICECC_VERSION,`pwd`/__maintainer-scripts/toolchains/gcc7-aarch64.tar.gz=aarch64-linux-gnu
+			;;
+		aarch64)
+			ICECC_VERSION=`pwd`/__maintainer-scripts/toolchains/gcc7-aarch64.tar.gz
+			ICECC_VERSION=$ICECC_VERSION,`pwd`/__maintainer-scripts/toolchains/gcc7-armhf.tar.gz=arm-linux-gnueabihf
+			;;
+		*)
+			echo "unsupported host architecture $HOSTARCH"
+			exit 1
+			;;
+	esac
+}
+
 #
 # Build kernel and modules for an architecture
 # Cross-compilers are hardcoded for the standard packaged
@@ -10,9 +30,7 @@ bootfarmip=192.168.140.1
 # $2: config to build (default oldconfig)
 #
 build_kernel() {
-	ICECC_VERSION=`pwd`/__maintainer-scripts/toolchains/gcc7-amd64.tar.gz
-	ICECC_VERSION=$ICECC_VERSION,`pwd`/__maintainer-scripts/toolchains/gcc7-armhf.tar.gz=arm-linux-gnueabihf
-	ICECC_VERSION=$ICECC_VERSION,`pwd`/__maintainer-scripts/toolchains/gcc7-aarch64.tar.gz=aarch64-linux-gnu
+	create_icecc_env
 	export ICECC_VERSION
 
 	case "$1" in
