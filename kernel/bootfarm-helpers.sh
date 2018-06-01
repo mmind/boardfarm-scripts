@@ -347,6 +347,7 @@ setup_imagedata() {
 			;;
 	esac
 
+	cp _bootfarm/$ARCH/kernel.release /home/devel/nfs/kernel/$ARCH
 	cp _bootfarm/$ARCH/$KERNELIMAGE _bootfarm/images/$ARCH
 	tar -C _bootfarm/images/$ARCH/dtbs -xzf _bootfarm/$ARCH/dtbs-$ARCH.tar.gz
 }
