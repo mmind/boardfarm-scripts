@@ -438,7 +438,7 @@ generate_legacy64_image() {
 # Essentially just calls the correct image generation function.
 #
 generate_images() {
-	for i in `cat _bootfarm/images/instances`; do
+	for i in `cat _bootfarm/images/instances | grep -v "^#"`; do
 		ARCH=`echo $i | cut -d ":" -f 2`
 		INST=`echo $i | cut -d ":" -f 1`
 		LDR=`echo $i | cut -d ":" -f 3`
