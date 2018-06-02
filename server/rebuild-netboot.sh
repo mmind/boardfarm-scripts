@@ -41,20 +41,6 @@ extract_dtbs() {
 	tar -C /home/devel/nfs/kernel/$ARCH/dtbs -xzf /home/devel/nfs/kernel/$ARCH/dtbs-$ARCH.tar.gz
 }
 
-unpack_modules() {
-	local ARCH=$1
-	local INST=$2
-	local TARGET=$3
-
-	if [ -d /home/devel/nfs/kernel/$INST ]; then
-		echo "$INST: unpacking special modules"
-		tar -C $TARGET/lib/modules -xzf /home/devel/nfs/kernel/$INST/modules-$INST.tar.gz
-	else
-		echo "$INST: unpacking $ARCH modules"
-		tar -C $TARGET/lib/modules -xzf /home/devel/nfs/kernel/$ARCH/modules-$ARCH.tar.gz
-	fi
-}
-
 if [ "$#" = "1" ]; then
 	TARGET=$1
 else
@@ -79,15 +65,7 @@ for i in `cat /home/devel/nfs/instances | grep -v "^#"`; do
 		continue
 	fi
 
-	if [ -d /home/devel/nfs/rootfs-$INST/lib/modules ]; then
-		set +e
-		rm -rf /home/devel/nfs/rootfs-$INST/lib/modules/*
-		set -e
-	else
-		sudo mkdir /home/devel/nfs/rootfs-$INST/lib/modules
-		sudo chown hstuebner.hstuebner /home/devel/nfs/rootfs-$INST/lib/modules
-	fi
-
+	setup_modules $ARCH $INST /home/devel/nfs/rootfs-$INST
 	unpack_modules $ARCH $INST /home/devel/nfs/rootfs-$INST
 
 	# only build initramfs for arm64 for now

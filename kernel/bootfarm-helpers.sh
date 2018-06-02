@@ -324,6 +324,35 @@ trigger_bootfarm() {
 	fi
 }
 
+setup_modules() {
+	local ARCH=$1
+	local INST=$2
+	local TARGET=$3
+
+	if [ -d $TARGET/lib/modules ]; then
+		set +e
+		rm -rf $TARGET/lib/modules/*
+		set -e
+	else
+		sudo mkdir $TARGET/lib/modules
+		sudo chown hstuebner.hstuebner $TARGET/lib/modules
+	fi
+}
+
+unpack_modules() {
+	local ARCH=$1
+	local INST=$2
+	local TARGET=$3
+
+	if [ -d /home/devel/nfs/kernel/$INST ]; then
+		echo "$INST: unpacking special modules"
+		tar -C $TARGET/lib/modules -xzf /home/devel/nfs/kernel/$INST/modules-$INST.tar.gz
+	else
+		echo "$INST: unpacking $ARCH modules"
+		tar -C $TARGET/lib/modules -xzf /home/devel/nfs/kernel/$ARCH/modules-$ARCH.tar.gz
+	fi
+}
+
 #
 # Setup data for the local image generation.
 # This includes getting the kernel image from the build directory
