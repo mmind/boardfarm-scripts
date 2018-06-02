@@ -429,7 +429,7 @@ build_initramfs() {
 # $2: architecture (arm32, arm64)
 #
 generate_chromeos_image() {
-	mkimage -f _bootfarm/images/$1-kernel.its _bootfarm/images/tmp/$1-vmlinux.uimg > /dev/null
+	mkimage -D "-q" -f _bootfarm/images/$1-kernel.its _bootfarm/images/tmp/$1-vmlinux.uimg > /dev/null
 
 	vbutil_kernel --pack _bootfarm/images/out/$1-vmlinux.kpart \
 	              --version 1 \
