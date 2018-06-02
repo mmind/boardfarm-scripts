@@ -378,7 +378,13 @@ setup_imagedata() {
 
 	cp _bootfarm/$ARCH/kernel.release /home/devel/nfs/kernel/$ARCH
 	cp _bootfarm/$ARCH/$KERNELIMAGE _bootfarm/images/$ARCH
+	cp _bootfarm/$ARCH/modules-$ARCH.tar.gz /home/devel/nfs/kernel/$ARCH
 	tar -C _bootfarm/images/$ARCH/dtbs -xzf _bootfarm/$ARCH/dtbs-$ARCH.tar.gz
+
+	if [ -d /home/devel/nfs/rootfs-$ARCH-base ]; then
+		setup_modules $ARCH $ARCH-base /home/devel/nfs/rootfs-$ARCH-base
+		unpack_modules $ARCH $ARCH-base /home/devel/nfs/rootfs-$ARCH-base
+	fi
 }
 
 build_initramfs() {
