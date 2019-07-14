@@ -1,14 +1,16 @@
 
 bootfarmip=192.168.140.1
 
+# Create icecc compiler package via
+# /usr/bin/icecc-create-env --gcc <gcc_path>
 create_icecc_env() {
 	HOSTARCH=`uname -m`
 
 	case "$HOSTARCH" in
 		x86_64)
-			ICECC_VERSION=`pwd`/__maintainer-scripts/toolchains/gcc7-amd64.tar.gz
-			ICECC_VERSION=$ICECC_VERSION,`pwd`/__maintainer-scripts/toolchains/gcc7-armhf.tar.gz=arm-linux-gnueabihf
-			ICECC_VERSION=$ICECC_VERSION,`pwd`/__maintainer-scripts/toolchains/gcc7-aarch64.tar.gz=aarch64-linux-gnu
+			ICECC_VERSION=`pwd`/__maintainer-scripts/toolchains/gcc8-amd64.tar.gz
+			ICECC_VERSION=$ICECC_VERSION,`pwd`/__maintainer-scripts/toolchains/gcc8-armhf.tar.gz=arm-linux-gnueabihf
+			ICECC_VERSION=$ICECC_VERSION,`pwd`/__maintainer-scripts/toolchains/gcc8-aarch64.tar.gz=aarch64-linux-gnu
 			;;
 		aarch64)
 			ICECC_VERSION=`pwd`/__maintainer-scripts/toolchains/gcc7-aarch64.tar.gz
@@ -56,7 +58,7 @@ build_kernel() {
 		conf=$2
 	fi
 
-	if [ -d /usr/lib/icecc ] && [ -f __maintainer-scripts/toolchains/gcc7-amd64.tar.gz ]; then
+	if [ -d /usr/lib/icecc ] && [ -f __maintainer-scripts/toolchains/gcc8-amd64.tar.gz ]; then
 		echo "using icecc"
 		export PATH=/usr/lib/icecc/bin:$PATH
 	fi
