@@ -115,6 +115,11 @@ class AVMAHA
         if ((preg_match("/200\s+OK$/", $response)) && (strlen($string) > 0))
             $data["energy"] = (int)$string;
 
+        $string = chop(@file_get_contents($url."&switchcmd=gettemperature"));
+        $response = $http_response_header[0];
+        if ((preg_match("/200\s+OK$/", $response)) && (strlen($string) > 0))
+            $data["temperature"] = (int)$string;
+
         return $data;
     }
 
