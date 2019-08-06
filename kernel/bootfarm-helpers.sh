@@ -140,6 +140,10 @@ build_uboot() {
 		export PATH=/usr/lib/icecc/bin:$PATH
 	fi
 
+	if [ ! -d _build-$1 ]; then
+		mkdir _build-$1
+	fi
+
 	if [ "x$2" = "x" ]; then
 		conf="*"
 		if [ ! -f _build-$1/builds ]; then
