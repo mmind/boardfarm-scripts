@@ -152,6 +152,12 @@ build_uboot() {
 		ret=$?
 		set -e
 		if [ "x$ret" != "x0" ]; then
+			# make sure we have a defconfig, before adding the build
+			if [ ! -f configs/$2_defconfig ]; then
+				echo "$2: no defconfig found for new build"
+				exit 1
+			fi
+
 			echo $2 >> _build-$1/builds
 		fi
 
