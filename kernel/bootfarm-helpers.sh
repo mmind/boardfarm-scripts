@@ -102,6 +102,85 @@ build_dtbs() {
 }
 
 #
+# Build u-boot for a target
+# Cross-compilers are hardcoded for the standard packaged
+# cross-compilers on a Debian system
+#
+# $1: target arch (arm32, arm64)
+# $2: config to build (optional, default all)
+#
+build_uboot() {
+	create_icecc_env
+	export ICECC_VERSION
+
+	case "$1" in
+		arm32)
+			KERNELARCH=arm
+			CROSS=arm-linux-gnueabihf-
+			;;
+		arm64)
+			KERNELARCH=arm
+			CROSS=aarch64-linux-gnu-
+			;;
+		*)
+			echo "unsupported architecture $1"
+			exit 1
+			;;
+	esac
+
+	if [ -d /usr/lib/icecc ] && [ -f __maintainer-scripts/toolchains/gcc8-amd64.tar.gz ]; then
+		echo "using icecc"
+		export PATH=/usr/lib/icecc/bin:$PATH
+	fi
+
+	if [ "x$2" = "x" ]; then
+		conf="*"
+		if [ ! -f _build-$1/builds ]; then
+			echo "$1: no builds registered"
+			return
+		fi
+	else
+		set +e
+		cat _build-$1/builds | grep $2 > /dev/null
+		ret=$?
+		set -e
+		if [ "x$ret" != "x0" ]; then
+			echo $2 >> _build-$1/builds
+		fi
+
+		conf=$2
+	fi
+
+	for c in `cat _build-$1/builds | grep -v "^#"`; do
+		if [ "$conf" != "*" ] && [ "$conf" != "$c" ]; then
+			echo "$c: skipping build"
+			continue
+		fi
+
+		set +e
+		make ARCH=$KERNELARCH CROSS_COMPILE=$CROSS O=_build-$1/$c ${c}_defconfig
+		ret=$?
+		if [ "x$ret" != "x0" ]; then
+			continue
+		fi
+
+		make ARCH=$KERNELARCH CROSS_COMPILE=$CROSS O=_build-$1/$c -j14
+		ret=$?
+		if [ "x$ret" != "x0" ]; then
+			continue
+		fi
+
+		make ARCH=$KERNELARCH CROSS_COMPILE=$CROSS O=_build-$1/$c -j14 u-boot.itb
+		ret=$?
+		if [ "x$ret" != "x0" ]; then
+			continue
+		fi
+
+		set -e
+	done
+}
+
+#
 # Clean the build-directory for an architecture
 #
 # $1: target arch (arm32, arm64)
@@ -301,6 +380,140 @@ install_dtbs() {
 			cp _bootfarm/$1/dtbs-$1.tar.gz _bootfarm/$1/dtbs-$1.tar.gz.bootfarm
 		fi
 	fi
+}
+
+# supported socs for uboot architecture selection for mkimage
+socs="rk3066a rk3188 rk3288 rk3328 rk3368 rk3399 px30"
+
+# Find out the soc uboot was built for
+# For this grep the uboot config for the matching CONFIG_ROCKCHIP_$soc
+# config variable.
+#
+# $1: target arch (arm32, arm64)
+# $2: target build
+#
+find_uboot_soc() {
+	case "$1" in
+		arm32)
+			KERNELARCH=arm
+			CROSS=arm-linux-gnueabihf-
+			;;
+		arm64)
+			KERNELARCH=arm64
+			CROSS=aarch64-linux-gnu-
+			;;
+		*)
+			echo "unsupported architecture $1"
+			exit 1
+			;;
+	esac
+
+	for i in $socs; do
+		set +e
+		cat _build-$1/$2/u-boot.cfg | cut -d " " -f 2 | grep -i CONFIG_ROCKCHIP_$i > /dev/null
+		ret=$?
+		set -e
+		if [ "x$ret" = "x0" ]; then
+			echo $i
+			return
+		fi
+	done
+}
+
+#
+# Install u-boot (= create images to flash to a device)
+# This will walk through the selected builds for an arch
+# or just process the specific one and create a tpl/spl image
+# in a target directory, copy the u-boot.itb there and create
+# a flash-script for sd-cards, based on the raw-sectors
+# deduced from the u-boot config it was build from.
+#
+# $1: target arch (arm32, arm64)
+# $2: target build (optional, default all)
+#
+install_uboot() {
+	install_setup $1
+
+	case "$1" in
+		arm32)
+			KERNELARCH=arm
+			CROSS=arm-linux-gnueabihf-
+			;;
+		arm64)
+			KERNELARCH=arm64
+			CROSS=aarch64-linux-gnu-
+			;;
+		*)
+			echo "unsupported architecture $1"
+			exit 1
+			;;
+	esac
+
+	if [ "x$2" = "x" ]; then
+		conf="*"
+	else
+		conf=$2
+	fi
+
+	for c in `cat _build-$1/builds | grep -v "^#"`; do
+		if [ "$conf" != "*" ] && [ "$conf" != "$c" ]; then
+			echo "$c: skipping build"
+			continue
+		fi
+
+		plat=$(find_uboot_soc $1 $c)
+		echo "Platform $plat"
+
+		if [ ! -d _bootfarm/$c ]; then
+			mkdir _bootfarm/$c
+		fi
+
+		if [ ! -f _build-$1/$c/spl/u-boot-spl.bin ]; then
+			echo "$c: build seems incomplete, skipping"
+			continue
+		fi
+
+		# create sd-card images
+		if [ -d "_build-$1/$c/tpl" ]; then
+			# tpl + spl combined
+			_build-$1/$c/tools/mkimage -n $plat -T rksd -d _build-$1/$c/tpl/u-boot-tpl.bin _bootfarm/$c/spl_mmc.img
+			cat _build-$1/$c/spl/u-boot-spl-dtb.bin >> _bootfarm/$c/spl_mmc.img
+		else
+			# spl-only image
+			_build-$1/$c/tools/mkimage -n $plat -T rksd -d _build-$1/$c/spl/u-boot-spl.bin _bootfarm/$c/spl_mmc.img
+		fi
+		cp _build-$1/$c/u-boot.itb _bootfarm/$c
+
+		# read raw offset to load the u-boot binary from and create a
+		# flash script to write both parts (spl/tpl+spl and uboot iself)
+		# to a sd-card
+		sd_offs=`cat _build-$1/$c/u-boot.cfg | grep CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR | cut -d " " -f 3`
+		cat <<EOF > _bootfarm/$c/flash_sd.sh
+#!/bin/sh
+
+if [ "x\$1" = "x" ]; then
+	echo "Usage: flash_sd.sh target_device"
+	exit 1
+fi
+
+if [ ! -b \$1 ]; then
+	echo "target is not a block device"
+	exit 1
+fi
+
+dd if=spl_mmc.img of=\$1 seek=64
+dd if=u-boot.itb of=\$1 seek=$(($sd_offs))
+sync
+
+EOF
+
+		chmod +x _bootfarm/$c/flash_sd.sh
+	done
+
+	# create a frankenstein image with binary-loader as tpl and spl
+	# for rkdeveloptool
+#	_bootfarm/boot_merger _bootfarm/px30.ini
+#	scp -C _bootfarm/loader.bin 192.168.137.170:/tmp
 }
 
 #
