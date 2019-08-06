@@ -1,6 +1,13 @@
 
 bootfarmip=192.168.140.1
 
+# supported atf platforms
+atf32="rk3288"
+atf64="px30 rk3328 rk3368 rk3399"
+
+# supported socs for uboot architecture selection for mkimage
+socs="rk3036 rk3066a rk3188 $atf32 $atf64"
+
 # Create icecc compiler package via
 # /usr/bin/icecc-create-env --gcc <gcc_path>
 create_icecc_env() {
@@ -177,6 +184,60 @@ build_uboot() {
 		fi
 
 		set -e
+	done
+}
+
+#
+# Build atf for a target
+# Cross-compilers are hardcoded for the standard packaged
+# cross-compilers on a Debian system
+#
+# $1: target arch (arm32, arm64)
+# $2: platform to build (optional, default all)
+#
+build_atf() {
+	create_icecc_env
+	export ICECC_VERSION
+
+	case "$1" in
+		arm32)
+			KERNELARCH=aarch32
+			CROSS="arm-linux-gnueabihf- AARCH32_SP=sp_min"
+			PLATS="$atf32"
+			BL=bl32
+			;;
+		arm64)
+			KERNELARCH=aarch64
+			CROSS=aarch64-linux-gnu-
+			PLATS="$atf64"
+			BL=bl31
+			;;
+		*)
+			echo "unsupported architecture $1"
+			exit 1
+			;;
+	esac
+
+	if [ "x$2" = "x" ]; then
+		conf="*"
+	else
+		conf=$2
+	fi
+
+	if [ -d /usr/lib/icecc ] && [ -f __maintainer-scripts/toolchains/gcc8-amd64.tar.gz ]; then
+		echo "using icecc"
+		export PATH=/usr/lib/icecc/bin:$PATH
+	fi
+
+	for p in $PLATS; do
+		if [ "$conf" != "*" ] && [ "$conf" != "$p" ]; then
+			echo "$p: skipping build"
+			continue
+		fi
+
+		echo "$p: building atf"
+		make ARCH=$KERNELARCH CROSS_COMPILE=$CROSS PLAT=$p clean
+		make ARCH=$KERNELARCH CROSS_COMPILE=$CROSS PLAT=$p -j14 $BL
 	done
 }
 
@@ -382,9 +443,6 @@ install_dtbs() {
 	fi
 }
 
-# supported socs for uboot architecture selection for mkimage
-socs="rk3066a rk3188 rk3288 rk3328 rk3368 rk3399 px30"
-
 # Find out the soc uboot was built for
 # For this grep the uboot config for the matching CONFIG_ROCKCHIP_$soc
 # config variable.
@@ -514,6 +572,62 @@ EOF
 	# for rkdeveloptool
 #	_bootfarm/boot_merger _bootfarm/px30.ini
 #	scp -C _bootfarm/loader.bin 192.168.137.170:/tmp
+}
+
+#
+# Install atf binary for a target
+# This means copying the created binary to a standard location
+#
+# $1: target arch (arm32, arm64)
+# $2: platform to build (optional, default all)
+#
+install_atf() {
+	install_setup $1
+
+	case "$1" in
+		arm32)
+			KERNELARCH=aarch32
+			CROSS="arm-linux-gnueabihf- AARCH32_SP=sp_min"
+			PLATS="$atf32"
+			BL=bl32
+			;;
+		arm64)
+			KERNELARCH=aarch64
+			CROSS=aarch64-linux-gnu-
+			PLATS="$atf64"
+			BL=bl31
+			;;
+		*)
+			echo "unsupported architecture $1"
+			exit 1
+			;;
+	esac
+
+	if [ "x$2" = "x" ]; then
+		conf="*"
+	else
+		conf=$2
+	fi
+
+	for p in $PLATS; do
+		if [ "$conf" != "*" ] && [ "$conf" != "$p" ]; then
+			echo "$p: skipping build"
+			continue
+		fi
+
+		echo "$p: installing atf"
+
+		if [ ! -d _bootfarm/$p ]; then
+			mkdir _bootfarm/$p
+		fi
+
+		if [ ! -f build/$p/release/$BL/$BL.elf ]; then
+			echo "$p: build seems incomplete, skipping"
+			continue
+		fi
+
+		cp build/$p/release/$BL/$BL.elf _bootfarm/$p
+	done
 }
 
 #

@@ -9,6 +9,13 @@ if [ -d common/spl ]; then
 
 	build_uboot arm64
 	install_uboot arm64
+elif [ -d bl31 ]; then
+	# we're building tf-a
+	build_atf arm32 $1
+	build_atf arm64 $1
+
+	install_atf arm32 $1
+	install_atf arm64 $1
 else
 	build_kernel arm32
 	build_kernel arm64
