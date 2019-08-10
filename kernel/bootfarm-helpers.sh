@@ -175,6 +175,14 @@ build_uboot() {
 		fi
 
 		set +e
+# if we want to use make clean, we'll need to copy the bl31.elf into the builddir
+# after make defconfig
+#		make ARCH=$KERNELARCH CROSS_COMPILE=$CROSS O=_build-$1/$c clean
+#		ret=$?
+#		if [ "x$ret" != "x0" ]; then
+#			continue
+#		fi
+
 		make ARCH=$KERNELARCH CROSS_COMPILE=$CROSS O=_build-$1/$c ${c}_defconfig
 		ret=$?
 		if [ "x$ret" != "x0" ]; then
