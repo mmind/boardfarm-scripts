@@ -14,7 +14,7 @@ else
 	# assume building a linux-kernel
 	build_kernel arm64 $1
 	install_kernel arm64
-	install_dtbs arm64 "rk"
+	install_dtbs arm64 "rk px30"
 
 	trigger_bootfarm arm64
 fi

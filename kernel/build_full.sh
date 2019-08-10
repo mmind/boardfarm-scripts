@@ -24,7 +24,7 @@ else
 	install_kernel arm64
 
 	install_dtbs arm32 "rk"
-	install_dtbs arm64 "rk"
+	install_dtbs arm64 "rk px30"
 
 	trigger_bootfarm
 fi
