@@ -108,6 +108,60 @@ build_dtbs() {
 	make ARCH=$KERNELARCH CROSS_COMPILE=$CROSS O=_build-$1 -j8 dtbs
 }
 
+# Find out the soc uboot was built for
+# For this grep the uboot config for the matching CONFIG_ROCKCHIP_$soc
+# config variable.
+#
+# $1: target arch (arm32, arm64)
+# $2: target build
+#
+find_uboot_soc() {
+	case "$1" in
+		arm32)
+			KERNELARCH=arm
+			CROSS=arm-linux-gnueabihf-
+			;;
+		arm64)
+			KERNELARCH=arm64
+			CROSS=aarch64-linux-gnu-
+			;;
+		*)
+			echo "unsupported architecture $1"
+			exit 1
+			;;
+	esac
+
+	for i in $socs; do
+		set +e
+		cat _build-$1/$2/u-boot.cfg | cut -d " " -f 2 | grep -i CONFIG_ROCKCHIP_$i > /dev/null
+		ret=$?
+		set -e
+		if [ "x$ret" = "x0" ]; then
+			echo $i
+			return
+		fi
+	done
+}
+
+# Determine if the uboot build will require ATF
+# Missing the blXY.elf can lead to "interesting" results like
+# the gmac spontanously not working as uboot will create a
+# dummy blXY.elf in that case.
+#
+# $1: target arch (arm32, arm64)
+# $2: target build
+#
+find_uboot_isatf() {
+	set +e
+	cat _build-$1/$2/u-boot.cfg | cut -d " " -f 2 | grep -i CONFIG_SPL_ATF > /dev/null
+	ret=$?
+	set -e
+	if [ "x$ret" = "x0" ]; then
+		echo "atf"
+		return
+	fi
+}
+
 #
 # Build u-boot for a target
 # Cross-compilers are hardcoded for the standard packaged
@@ -124,10 +178,12 @@ build_uboot() {
 		arm32)
 			KERNELARCH=arm
 			CROSS=arm-linux-gnueabihf-
+			BL=bl32
 			;;
 		arm64)
 			KERNELARCH=arm
 			CROSS=aarch64-linux-gnu-
+			BL=bl31
 			;;
 		*)
 			echo "unsupported architecture $1"
@@ -183,10 +239,18 @@ build_uboot() {
 #			continue
 #		fi
 
+		# make the boards defconfig - this also creates the build dir
 		make ARCH=$KERNELARCH CROSS_COMPILE=$CROSS O=_build-$1/$c ${c}_defconfig
 		ret=$?
 		if [ "x$ret" != "x0" ]; then
 			continue
+		fi
+
+		# if needed check for the presence of the ATF binary
+		needsatf=$(find_uboot_isatf $1 $c)
+		if [ "$needsatf" = "atf" ] && [ ! -f _build-$1/$c/$BL.elf ]; then
+			echo "$c: missing $BL.elf"
+			exit 1
 		fi
 
 		make ARCH=$KERNELARCH CROSS_COMPILE=$CROSS O=_build-$1/$c -j14
@@ -459,41 +523,6 @@ install_dtbs() {
 			cp _bootfarm/$1/dtbs-$1.tar.gz _bootfarm/$1/dtbs-$1.tar.gz.bootfarm
 		fi
 	fi
-}
-
-# Find out the soc uboot was built for
-# For this grep the uboot config for the matching CONFIG_ROCKCHIP_$soc
-# config variable.
-#
-# $1: target arch (arm32, arm64)
-# $2: target build
-#
-find_uboot_soc() {
-	case "$1" in
-		arm32)
-			KERNELARCH=arm
-			CROSS=arm-linux-gnueabihf-
-			;;
-		arm64)
-			KERNELARCH=arm64
-			CROSS=aarch64-linux-gnu-
-			;;
-		*)
-			echo "unsupported architecture $1"
-			exit 1
-			;;
-	esac
-
-	for i in $socs; do
-		set +e
-		cat _build-$1/$2/u-boot.cfg | cut -d " " -f 2 | grep -i CONFIG_ROCKCHIP_$i > /dev/null
-		ret=$?
-		set -e
-		if [ "x$ret" = "x0" ]; then
-			echo $i
-			return
-		fi
-	done
 }
 
 #
