@@ -15,13 +15,13 @@ create_icecc_env() {
 
 	case "$HOSTARCH" in
 		x86_64)
-			ICECC_VERSION=`pwd`/__maintainer-scripts/toolchains/gcc8-amd64.tar.gz
-			ICECC_VERSION=$ICECC_VERSION,`pwd`/__maintainer-scripts/toolchains/gcc8-armhf.tar.gz=arm-linux-gnueabihf
-			ICECC_VERSION=$ICECC_VERSION,`pwd`/__maintainer-scripts/toolchains/gcc8-aarch64.tar.gz=aarch64-linux-gnu
+			ICECC_VERSION=`pwd`/__maintainer-scripts/toolchains/gcc9-amd64.tar.gz=x86_64-linux-gnu
+			ICECC_VERSION=$ICECC_VERSION,`pwd`/__maintainer-scripts/toolchains/gcc9-armhf.tar.gz=arm-linux-gnueabihf
+			ICECC_VERSION=$ICECC_VERSION,`pwd`/__maintainer-scripts/toolchains/gcc9-aarch64.tar.gz=aarch64-linux-gnu
 			;;
 		aarch64)
-			ICECC_VERSION=`pwd`/__maintainer-scripts/toolchains/gcc7-aarch64.tar.gz
-			ICECC_VERSION=$ICECC_VERSION,`pwd`/__maintainer-scripts/toolchains/gcc7-armhf.tar.gz=arm-linux-gnueabihf
+			ICECC_VERSION=`pwd`/__maintainer-scripts/toolchains/gcc9-aarch64.tar.gz
+			ICECC_VERSION=$ICECC_VERSION,`pwd`/__maintainer-scripts/toolchains/gcc9-armhf.tar.gz=arm-linux-gnueabihf
 			;;
 		*)
 			echo "unsupported host architecture $HOSTARCH"
