@@ -65,7 +65,7 @@ build_kernel() {
 		conf=$2
 	fi
 
-	if [ -d /usr/lib/icecc ] && [ -f __maintainer-scripts/toolchains/gcc8-amd64.tar.gz ]; then
+	if [ -d /usr/lib/icecc ] && [ -f __maintainer-scripts/toolchains/gcc9-amd64.tar.gz ]; then
 		echo "using icecc"
 		export PATH=/usr/lib/icecc/bin:$PATH
 	fi
@@ -191,7 +191,7 @@ build_uboot() {
 			;;
 	esac
 
-	if [ -d /usr/lib/icecc ] && [ -f __maintainer-scripts/toolchains/gcc8-amd64.tar.gz ]; then
+	if [ -d /usr/lib/icecc ] && [ -f __maintainer-scripts/toolchains/gcc9-amd64.tar.gz ]; then
 		echo "using icecc"
 		export PATH=/usr/lib/icecc/bin:$PATH
 	fi
@@ -306,7 +306,7 @@ build_atf() {
 		conf=$2
 	fi
 
-	if [ -d /usr/lib/icecc ] && [ -f __maintainer-scripts/toolchains/gcc8-amd64.tar.gz ]; then
+	if [ -d /usr/lib/icecc ] && [ -f __maintainer-scripts/toolchains/gcc9-amd64.tar.gz ]; then
 		echo "using icecc"
 		export PATH=/usr/lib/icecc/bin:$PATH
 	fi
