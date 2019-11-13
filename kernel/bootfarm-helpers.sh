@@ -317,9 +317,9 @@ build_atf() {
 			continue
 		fi
 
-		echo "$p: building atf"
-		make ARCH=$KERNELARCH CROSS_COMPILE=$CROSS PLAT=$p clean
-		make ARCH=$KERNELARCH CROSS_COMPILE=$CROSS PLAT=$p -j14 $BL
+		echo "$p: building atf with $BL"
+		make ARCH=$KERNELARCH CROSS_COMPILE=$CROSS PLAT=$p clean > /dev/null
+		make ARCH=$KERNELARCH CROSS_COMPILE=$CROSS PLAT=$p -j14 $BL > /dev/null
 	done
 }
 
