@@ -5,6 +5,10 @@ bootfarmip=192.168.140.1
 atf32="rk3288"
 atf64="px30 rk3328 rk3368 rk3399"
 
+# supported optee platforms
+optee32="rk322x"
+optee64="px30 rk3399"
+
 # supported socs for uboot architecture selection for mkimage
 socs="rk3036 rk3066a rk3188 $atf32 $atf64"
 
@@ -292,7 +296,7 @@ build_atf() {
 			KERNELARCH=aarch64
 			CROSS=aarch64-linux-gnu-
 			PLATS="$atf64"
-			BL=bl31
+			BL="SPD=opteed bl31"
 			;;
 		*)
 			echo "unsupported architecture $1"
@@ -324,6 +328,57 @@ build_atf() {
 }
 
 #
+# Build optee for a target
+# Cross-compilers are hardcoded for the standard packaged
+# cross-compilers on a Debian system
+#
+# $1: target arch (arm32, arm64)
+# $2: platform to build (optional, default all)
+#
+build_optee() {
+	create_icecc_env
+	export ICECC_VERSION
+
+	case "$1" in
+		arm32)
+			KERNELARCH=aarch32
+			CROSS="CROSS_COMPILE32=arm-linux-gnueabihf-"
+			PLATS="$optee32"
+			;;
+		arm64)
+			KERNELARCH=aarch64
+			CROSS="CROSS_COMPILE32=arm-linux-gnueabihf- CROSS_COMPILE64=aarch64-linux-gnu-"
+			PLATS="$optee64"
+			;;
+		*)
+			echo "unsupported architecture $1"
+			exit 1
+			;;
+	esac
+
+	if [ "x$2" = "x" ]; then
+		conf="*"
+	else
+		conf=$2
+	fi
+
+	if [ -d /usr/lib/icecc ] && [ -f __maintainer-scripts/toolchains/gcc9-amd64.tar.gz ]; then
+		echo "using icecc"
+		export PATH=/usr/lib/icecc/bin:$PATH
+	fi
+
+	for p in $PLATS; do
+		if [ "$conf" != "*" ] && [ "$conf" != "$p" ]; then
+			echo "$p: skipping build"
+			continue
+		fi
+
+		echo "$p: building optee"
+		make $CROSS CFG_WERROR=y PLATFORM=rockchip PLATFORM_FLAVOR=$p O=_build-$1/$p -j14 all > /dev/null
+	done
+}
+
+#
 # Clean the build-directory for an architecture
 #
 # $1: target arch (arm32, arm64)
@@ -345,6 +400,46 @@ clean_kernel() {
 	esac
 
 	make ARCH=$KERNELARCH CROSS_COMPILE=$CROSS O=_build-$1 clean
+}
+
+#
+# Clean the build-directory for an optee-platform
+#
+# $1: target arch (arm32, arm64)
+# $2: optional platform specifier to limit actions to it
+#
+clean_optee() {
+	case "$1" in
+		arm32)
+			KERNELARCH=aarch32
+			CROSS="CROSS_COMPILE32=arm-linux-gnueabihf-"
+			PLATS="$optee32"
+			;;
+		arm64)
+			KERNELARCH=aarch64
+			CROSS="CROSS_COMPILE32=arm-linux-gnueabihf- CROSS_COMPILE64=aarch64-linux-gnu-"
+			PLATS="$optee64"
+			;;
+		*)
+			echo "unsupported architecture $1"
+			exit 1
+			;;
+	esac
+
+	if [ "x$2" = "x" ]; then
+		conf="*"
+	else
+		conf=$2
+	fi
+
+	for p in $PLATS; do
+		if [ "$conf" != "*" ] && [ "$conf" != "$p" ]; then
+			echo "$p: skipping build"
+			continue
+		fi
+
+		make $CROSS CFG_WERROR=y PLATFORM=rockchip PLATFORM_FLAVOR=$p O=_build-$1/$p clean
+	done
 }
 
 install_setup() {
@@ -674,6 +769,60 @@ install_atf() {
 		fi
 
 		cp build/$p/release/$BL/$BL.elf _bootfarm/$p
+	done
+}
+
+#
+# Install optee binary for a target
+# This means copying the created binary to a standard location
+#
+# $1: target arch (arm32, arm64)
+# $2: platform to build (optional, default all)
+#
+install_optee() {
+	install_setup $1
+
+	case "$1" in
+		arm32)
+			KERNELARCH=aarch32
+			CROSS="arm-linux-gnueabihf-"
+			PLATS="$optee32"
+			;;
+		arm64)
+			KERNELARCH=aarch64
+			CROSS=aarch64-linux-gnu-
+			PLATS="$optee64"
+			;;
+		*)
+			echo "unsupported architecture $1"
+			exit 1
+			;;
+	esac
+
+	if [ "x$2" = "x" ]; then
+		conf="*"
+	else
+		conf=$2
+	fi
+
+	for p in $PLATS; do
+		if [ "$conf" != "*" ] && [ "$conf" != "$p" ]; then
+			echo "$p: skipping build"
+			continue
+		fi
+
+		echo "$p: installing optee"
+
+		if [ ! -d _bootfarm/$p ]; then
+			mkdir _bootfarm/$p
+		fi
+
+		if [ ! -f _build-$1/$p/core/tee.elf ]; then
+			echo "$p: build seems incomplete, skipping"
+			continue
+		fi
+
+		cp _build-$1/$p/core/tee.elf _bootfarm/$p
 	done
 }
 

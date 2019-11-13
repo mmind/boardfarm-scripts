@@ -10,6 +10,10 @@ elif [ -d bl31 ]; then
 	# we're building tf-a
 	build_atf arm64 $1
 	install_atf arm64 $1
+elif [ -d core/tee ]; then
+	# we're building OP-Tee
+	build_optee arm64 $1
+	install_optee arm64 $1
 else
 	# assume building a linux-kernel
 	build_kernel arm64 $1
