@@ -76,7 +76,15 @@ build_kernel() {
 
 	make ARCH=$KERNELARCH CROSS_COMPILE=$CROSS KCPPFLAGS="-fno-pic -Wno-pointer-sign" O=_build-$1 $conf
 	make ARCH=$KERNELARCH CROSS_COMPILE=$CROSS KCPPFLAGS="-fno-pic -Wno-pointer-sign" O=_build-$1 -j14 $IMAGE
-	make ARCH=$KERNELARCH CROSS_COMPILE=$CROSS KCPPFLAGS="-fno-pic -Wno-pointer-sign" O=_build-$1 -j14 modules
+
+	set +e
+	cat _build-$1/.config | grep "CONFIG_MODULES=y" > /dev/null
+	ret=$?
+	set -e
+	if [ "x$ret" = "x0" ]; then
+		make ARCH=$KERNELARCH CROSS_COMPILE=$CROSS KCPPFLAGS="-fno-pic -Wno-pointer-sign" O=_build-$1 -j14 modules
+	fi
+
 	build_dtbs $1
 }
 
@@ -493,7 +501,17 @@ install_kernel() {
 		rm -r _bootfarm/$1/lib
 	fi
 
-	make ARCH=$KERNELARCH CROSS_COMPILE=$CROSS O=_build-$1 -j8 INSTALL_MOD_PATH=../_bootfarm/$1 modules_install
+	set +e
+	cat _build-$1/.config | grep "CONFIG_MODULES=y" > /dev/null
+	ret=$?
+	set -e
+	if [ "x$ret" = "x0" ]; then
+		make ARCH=$KERNELARCH CROSS_COMPILE=$CROSS O=_build-$1 -j8 INSTALL_MOD_PATH=../_bootfarm/$1 modules_install
+	else
+		rel=`cat _build-$1/include/config/kernel.release`
+		mkdir -p _bootfarm/$1/lib/modules/$rel
+		touch _bootfarm/$1/lib/modules/$rel/no-modules
+	fi
 
 	if [ -f _bootfarm/$1/modules-$1.tar.gz ]; then
 		rm  _bootfarm/$1/modules-$1.tar.gz
