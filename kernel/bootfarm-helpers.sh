@@ -841,6 +841,8 @@ install_optee() {
 		fi
 
 		cp _build-$1/$p/core/tee.elf _bootfarm/$p
+		tar -C _build-$1/$p -czf _bootfarm/$p/export-ta_arm32.tar.gz export-ta_arm32
+		tar -C _build-$1/$p -czf _bootfarm/$p/export-ta_arm64.tar.gz export-ta_arm64
 	done
 }
 
