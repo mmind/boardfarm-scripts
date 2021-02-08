@@ -19,13 +19,13 @@ create_icecc_env() {
 
 	case "$HOSTARCH" in
 		x86_64)
-			ICECC_VERSION=`pwd`/__maintainer-scripts/toolchains/gcc9-amd64.tar.gz=x86_64-linux-gnu
-			ICECC_VERSION=$ICECC_VERSION,`pwd`/__maintainer-scripts/toolchains/gcc9-armhf.tar.gz=arm-linux-gnueabihf
-			ICECC_VERSION=$ICECC_VERSION,`pwd`/__maintainer-scripts/toolchains/gcc9-aarch64.tar.gz=aarch64-linux-gnu
+			ICECC_VERSION=`pwd`/__maintainer-scripts/toolchains/gcc10-amd64.tar.gz=x86_64-linux-gnu
+			ICECC_VERSION=$ICECC_VERSION,`pwd`/__maintainer-scripts/toolchains/gcc10-armhf.tar.gz=arm-linux-gnueabihf
+			ICECC_VERSION=$ICECC_VERSION,`pwd`/__maintainer-scripts/toolchains/gcc10-aarch64.tar.gz=aarch64-linux-gnu
 			;;
 		aarch64)
-			ICECC_VERSION=`pwd`/__maintainer-scripts/toolchains/gcc9-aarch64.tar.gz
-			ICECC_VERSION=$ICECC_VERSION,`pwd`/__maintainer-scripts/toolchains/gcc9-armhf.tar.gz=arm-linux-gnueabihf
+			ICECC_VERSION=`pwd`/__maintainer-scripts/toolchains/gcc10-aarch64.tar.gz
+			ICECC_VERSION=$ICECC_VERSION,`pwd`/__maintainer-scripts/toolchains/gcc10-armhf.tar.gz=arm-linux-gnueabihf
 			;;
 		*)
 			echo "unsupported host architecture $HOSTARCH"
@@ -69,7 +69,7 @@ build_kernel() {
 		conf=$2
 	fi
 
-	if [ -d /usr/lib/icecc ] && [ -f __maintainer-scripts/toolchains/gcc9-amd64.tar.gz ]; then
+	if [ -d /usr/lib/icecc ] && [ -f __maintainer-scripts/toolchains/gcc10-amd64.tar.gz ]; then
 		echo "using icecc"
 		export PATH=/usr/lib/icecc/bin:$PATH
 	fi
@@ -203,7 +203,7 @@ build_uboot() {
 			;;
 	esac
 
-	if [ -d /usr/lib/icecc ] && [ -f __maintainer-scripts/toolchains/gcc9-amd64.tar.gz ]; then
+	if [ -d /usr/lib/icecc ] && [ -f __maintainer-scripts/toolchains/gcc10-amd64.tar.gz ]; then
 		echo "using icecc"
 		export PATH=/usr/lib/icecc/bin:$PATH
 	fi
@@ -318,7 +318,7 @@ build_atf() {
 		conf=$2
 	fi
 
-	if [ -d /usr/lib/icecc ] && [ -f __maintainer-scripts/toolchains/gcc9-amd64.tar.gz ]; then
+	if [ -d /usr/lib/icecc ] && [ -f __maintainer-scripts/toolchains/gcc10-amd64.tar.gz ]; then
 		echo "using icecc"
 		export PATH=/usr/lib/icecc/bin:$PATH
 	fi
@@ -370,7 +370,7 @@ build_optee() {
 		conf=$2
 	fi
 
-	if [ -d /usr/lib/icecc ] && [ -f __maintainer-scripts/toolchains/gcc9-amd64.tar.gz ]; then
+	if [ -d /usr/lib/icecc ] && [ -f __maintainer-scripts/toolchains/gcc10-amd64.tar.gz ]; then
 		echo "using icecc"
 		export PATH=/usr/lib/icecc/bin:$PATH
 	fi
