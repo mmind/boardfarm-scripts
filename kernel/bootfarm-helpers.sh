@@ -120,6 +120,40 @@ build_dtbs() {
 	make ARCH=$KERNELARCH CROSS_COMPILE=$CROSS O=_build-$1 -j8 dtbs
 }
 
+#
+# Check devicetree YAML for an architecture
+#
+# $1: target arch (arm32, arm64)
+# $2: config to build (default oldconfig)
+#
+build_dtbscheck() {
+	case "$1" in
+		arm32)
+			KERNELARCH=arm
+			CROSS=arm-linux-gnueabihf-
+			;;
+		arm64)
+			KERNELARCH=arm64
+			CROSS=aarch64-linux-gnu-
+			;;
+		*)
+			echo "unsupported architecture $1"
+			exit 1
+			;;
+	esac
+
+	if [ "x$2" = "x" ]; then
+		conf="oldconfig"
+	else
+		conf=$2
+	fi
+
+	make ARCH=$KERNELARCH CROSS_COMPILE=$CROSS O=_build-$1 $conf
+	make ARCH=$KERNELARCH CROSS_COMPILE=$CROSS O=_build-$1 -j8 dtbs
+	make ARCH=$KERNELARCH CROSS_COMPILE=$CROSS O=_build-$1 -j8 dt_binding_check
+	make ARCH=$KERNELARCH CROSS_COMPILE=$CROSS O=_build-$1 -j8 dtbs_check
+}
+
 # Find out the soc uboot was built for
 # For this grep the uboot config for the matching CONFIG_ROCKCHIP_$soc
 # config variable.
