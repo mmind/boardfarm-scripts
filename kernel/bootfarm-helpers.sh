@@ -57,6 +57,12 @@ build_kernel() {
 			CROSS=aarch64-linux-gnu-
 			IMAGE=Image
 			;;
+		riscv)
+			# needs gcc-riscv64-linux-gnu
+			KERNELARCH=riscv
+			CROSS=riscv64-linux-gnu-
+			IMAGE=Image
+			;;
 		*)
 			echo "unsupported architecture $1"
 			exit 1
@@ -104,6 +110,11 @@ build_dtbs() {
 			KERNELARCH=arm64
 			CROSS=aarch64-linux-gnu-
 			;;
+		riscv)
+			# needs gcc-riscv64-linux-gnu
+			KERNELARCH=riscv
+			CROSS=riscv64-linux-gnu-
+			;;
 		*)
 			echo "unsupported architecture $1"
 			exit 1
@@ -135,6 +146,11 @@ build_dtbscheck() {
 		arm64)
 			KERNELARCH=arm64
 			CROSS=aarch64-linux-gnu-
+			;;
+		riscv)
+			# needs gcc-riscv64-linux-gnu
+			KERNELARCH=riscv
+			CROSS=riscv64-linux-gnu-
 			;;
 		*)
 			echo "unsupported architecture $1"
@@ -170,6 +186,11 @@ find_uboot_soc() {
 		arm64)
 			KERNELARCH=arm64
 			CROSS=aarch64-linux-gnu-
+			;;
+		riscv)
+			# needs gcc-riscv64-linux-gnu
+			KERNELARCH=riscv
+			CROSS=riscv64-linux-gnu-
 			;;
 		*)
 			echo "unsupported architecture $1"
@@ -230,6 +251,11 @@ build_uboot() {
 			KERNELARCH=arm
 			CROSS=aarch64-linux-gnu-
 			BL=bl31
+			;;
+		riscv)
+			# needs gcc-riscv64-linux-gnu
+			KERNELARCH=riscv
+			CROSS=riscv64-linux-gnu-
 			;;
 		*)
 			echo "unsupported architecture $1"
@@ -302,6 +328,12 @@ build_uboot() {
 		make ARCH=$KERNELARCH CROSS_COMPILE=$CROSS O=_build-$1/$c -j14
 		ret=$?
 		if [ "x$ret" != "x0" ]; then
+			continue
+		fi
+
+		# riscv doesn't use a u-boot fit image, but instead encapsulates
+		# the u-boot binary into a opensbi firmware image
+		if [ "$1" = "riscv" ]; then
 			continue
 		fi
 
@@ -435,6 +467,11 @@ clean_kernel() {
 			KERNELARCH=arm64
 			CROSS=aarch64-linux-gnu-
 			;;
+		riscv)
+			# needs gcc-riscv64-linux-gnu
+			KERNELARCH=riscv
+			CROSS=riscv64-linux-gnu-
+			;;
 		*)
 			echo "unsupported architecture $1"
 			exit 1
@@ -516,6 +553,12 @@ install_kernel() {
 		arm64)
 			KERNELARCH=arm64
 			CROSS=aarch64-linux-gnu-
+			KERNELIMAGE=Image
+			;;
+		riscv)
+			# needs gcc-riscv64-linux-gnu
+			KERNELARCH=riscv
+			CROSS=riscv64-linux-gnu-
 			KERNELIMAGE=Image
 			;;
 		*)
@@ -624,6 +667,11 @@ install_dtbs() {
 			KERNELARCH=arm64
 			SUBDIR="*/"
 			;;
+		riscv)
+			# needs gcc-riscv64-linux-gnu
+			KERNELARCH=riscv
+			SUBDIR="*/"
+			;;
 		*)
 			echo "unsupported architecture $1"
 			exit 1
@@ -672,6 +720,115 @@ install_dtbs() {
 	fi
 }
 
+install_uboot_rockchip() {
+	plat=$(find_uboot_soc $1 $2)
+	echo "Platform $plat"
+
+	if [ ! -d _bootfarm/$2 ]; then
+		mkdir _bootfarm/$2
+	fi
+
+	if [ ! -f _build-$1/$2/spl/u-boot-spl.bin ]; then
+		echo "$2: build seems incomplete, skipping"
+		return
+	fi
+
+	# create sd-card images
+	if [ -d "_build-$1/$2/tpl" ]; then
+		# tpl + spl combined
+		_build-$1/$2/tools/mkimage -n $plat -T rksd -d _build-$1/$2/tpl/u-boot-tpl.bin _bootfarm/$2/spl_mmc.img
+		cat _build-$1/$2/spl/u-boot-spl-dtb.bin >> _bootfarm/$2/spl_mmc.img
+	else
+		# spl-only image
+		_build-$1/$2/tools/mkimage -n $plat -T rksd -d _build-$1/$2/spl/u-boot-spl.bin _bootfarm/$2/spl_mmc.img
+	fi
+	cp _build-$1/$2/u-boot.itb _bootfarm/$2
+
+	# read raw offset to load the u-boot binary from and create a
+	# flash script to write both parts (spl/tpl+spl and uboot iself)
+	# to a sd-card
+	sd_offs=`cat _build-$1/$2/u-boot.cfg | grep CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR | cut -d " " -f 3`
+	cat <<EOF > _bootfarm/$c/flash_sd.sh
+#!/bin/sh
+
+if [ "x\$1" = "x" ]; then
+	echo "Usage: flash_sd.sh target_device"
+	exit 1
+fi
+
+if [ ! -b \$1 ]; then
+	echo "target is not a block device"
+	exit 1
+fi
+
+dd if=spl_mmc.img of=\$1 seek=64
+dd if=u-boot.itb of=\$1 seek=$(($sd_offs))
+sync
+
+EOF
+
+	chmod +x _bootfarm/$2/flash_sd.sh
+}
+
+install_uboot_riscv() {
+	cp _build-$1/$2/u-boot.bin _bootfarm/$2
+	cp _build-$1/$2/u-boot.dtb _bootfarm/$2
+
+	U_BOOT_PATH=`pwd`/_bootfarm/$2
+
+	cat <<EOF > _bootfarm/$c/build_opensbi.sh
+function handle_file {
+    inFile=\$1
+    echo inFile: \$inFile
+    outFile=\$inFile.out
+
+    inSize=\`stat -c "%s" \$inFile\`
+    inSize32HexBe=\`printf "%08x\n" \$inSize\`
+    inSize32HexLe=\${inSize32HexBe:6:2}\${inSize32HexBe:4:2}\${inSize32HexBe:2:2}\${inSize32HexBe:0:2}
+    echo "inSize: \$inSize (0x\$inSize32HexBe, LE:0x\$inSize32HexLe)"
+
+    echo \$inSize32HexLe | xxd -r -ps > \$outFile
+    cat \$inFile >> \$outFile
+    echo outFile: \$outFile
+
+    outSize=\`stat -c "%s" \$outFile\`
+    outSize32HexBe=\`printf "%08x\n" \$outSize\`
+    echo "outSize: \$outSize (0x\$outSize32HexBe)"
+}
+
+make CROSS_COMPILE=riscv64-linux-gnu- ARCH=riscv PLATFORM=generic FW_PAYLOAD_PATH=${U_BOOT_PATH}/u-boot.bin FW_FDT_PATH=${U_BOOT_PATH}/u-boot.dtb
+
+if [ ! -d _bootfarm ]; then
+	mkdir _bootfarm
+fi
+
+if [ ! -d _bootfarm/$2 ]; then
+	mkdir _bootfarm/$2
+fi
+
+cp build/platform/generic/firmware/fw_payload.bin _bootfarm/$2
+handle_file _bootfarm/$2/fw_payload.bin
+
+cat << EO2
+Flash instructions:
+
+Start serial console as
+    picocom -b 115200 -s "sx -vv" /dev/ttyUSB0
+
+Start board and press a key on the keyloaders countdown
+
+Press 0 + Enter, wait for the C character being displayed.
+Press [Ctrl][a] [Ctrl][s]. Picocom will then ask for a file name,
+and you should type _bootfarm/$2/fw_payload.bin.out.
+EO2
+EOF
+
+	chmod +x _bootfarm/$2/build_opensbi.sh
+
+	echo "now change to the opensbi-sources and run"
+	echo "  `pwd`/_bootfarm/starfive_vic7100_beagle_v_smode/build_opensbi.sh"
+}
+
 #
 # Install u-boot (= create images to flash to a device)
 # This will walk through the selected builds for an arch
@@ -695,6 +852,11 @@ install_uboot() {
 			KERNELARCH=arm64
 			CROSS=aarch64-linux-gnu-
 			;;
+		riscv)
+			# needs gcc-riscv64-linux-gnu
+			KERNELARCH=riscv
+			CROSS=riscv64-linux-gnu-
+			;;
 		*)
 			echo "unsupported architecture $1"
 			exit 1
@@ -713,53 +875,11 @@ install_uboot() {
 			continue
 		fi
 
-		plat=$(find_uboot_soc $1 $c)
-		echo "Platform $plat"
-
-		if [ ! -d _bootfarm/$c ]; then
-			mkdir _bootfarm/$c
-		fi
-
-		if [ ! -f _build-$1/$c/spl/u-boot-spl.bin ]; then
-			echo "$c: build seems incomplete, skipping"
-			continue
-		fi
-
-		# create sd-card images
-		if [ -d "_build-$1/$c/tpl" ]; then
-			# tpl + spl combined
-			_build-$1/$c/tools/mkimage -n $plat -T rksd -d _build-$1/$c/tpl/u-boot-tpl.bin _bootfarm/$c/spl_mmc.img
-			cat _build-$1/$c/spl/u-boot-spl-dtb.bin >> _bootfarm/$c/spl_mmc.img
+		if [ "$1" = "riscv" ]; then
+			install_uboot_riscv $1 $c
 		else
-			# spl-only image
-			_build-$1/$c/tools/mkimage -n $plat -T rksd -d _build-$1/$c/spl/u-boot-spl.bin _bootfarm/$c/spl_mmc.img
+			install_uboot_rockchip $1 $c
 		fi
-		cp _build-$1/$c/u-boot.itb _bootfarm/$c
-
-		# read raw offset to load the u-boot binary from and create a
-		# flash script to write both parts (spl/tpl+spl and uboot iself)
-		# to a sd-card
-		sd_offs=`cat _build-$1/$c/u-boot.cfg | grep CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR | cut -d " " -f 3`
-		cat <<EOF > _bootfarm/$c/flash_sd.sh
-#!/bin/sh
-
-if [ "x\$1" = "x" ]; then
-	echo "Usage: flash_sd.sh target_device"
-	exit 1
-fi
-
-if [ ! -b \$1 ]; then
-	echo "target is not a block device"
-	exit 1
-fi
-
-dd if=spl_mmc.img of=\$1 seek=64
-dd if=u-boot.itb of=\$1 seek=$(($sd_offs))
-sync
-
-EOF
-
-		chmod +x _bootfarm/$c/flash_sd.sh
 	done
 
 	# create a frankenstein image with binary-loader as tpl and spl
@@ -947,6 +1067,9 @@ setup_imagedata() {
 			KERNELIMAGE=zImage
 			;;
 		arm64)
+			KERNELIMAGE=Image
+			;;
+		riscv)
 			KERNELIMAGE=Image
 			;;
 		*)
