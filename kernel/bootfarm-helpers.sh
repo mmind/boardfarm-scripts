@@ -810,6 +810,10 @@ cp build/platform/generic/firmware/fw_payload.bin _bootfarm/$2
 handle_file _bootfarm/$2/fw_payload.bin
 
 cat << EO2
+
+Build finished
+--------------
+
 Flash instructions:
 
 Start serial console as
@@ -819,12 +823,16 @@ Start board and press a key on the keyloaders countdown
 
 Press 0 + Enter, wait for the C character being displayed.
 Press [Ctrl][a] [Ctrl][s]. Picocom will then ask for a file name,
-and you should type _bootfarm/$2/fw_payload.bin.out.
+and you should type _bootfarm/$2/fw_payload.bin.out
 EO2
 EOF
 
 	chmod +x _bootfarm/$2/build_opensbi.sh
 
+	echo ""
+	echo "Build finished"
+	echo "--------------"
+	echo ""
 	echo "now change to the opensbi-sources and run"
 	echo "  `pwd`/_bootfarm/starfive_vic7100_beagle_v_smode/build_opensbi.sh"
 }
