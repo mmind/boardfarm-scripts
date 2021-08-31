@@ -57,7 +57,7 @@ build_kernel() {
 			CROSS=aarch64-linux-gnu-
 			IMAGE=Image
 			;;
-		riscv)
+		riscv64)
 			# needs gcc-riscv64-linux-gnu
 			KERNELARCH=riscv
 			CROSS=riscv64-linux-gnu-
@@ -110,7 +110,7 @@ build_dtbs() {
 			KERNELARCH=arm64
 			CROSS=aarch64-linux-gnu-
 			;;
-		riscv)
+		riscv64)
 			# needs gcc-riscv64-linux-gnu
 			KERNELARCH=riscv
 			CROSS=riscv64-linux-gnu-
@@ -147,7 +147,7 @@ build_dtbscheck() {
 			KERNELARCH=arm64
 			CROSS=aarch64-linux-gnu-
 			;;
-		riscv)
+		riscv64)
 			# needs gcc-riscv64-linux-gnu
 			KERNELARCH=riscv
 			CROSS=riscv64-linux-gnu-
@@ -187,7 +187,7 @@ find_uboot_soc() {
 			KERNELARCH=arm64
 			CROSS=aarch64-linux-gnu-
 			;;
-		riscv)
+		riscv64)
 			# needs gcc-riscv64-linux-gnu
 			KERNELARCH=riscv
 			CROSS=riscv64-linux-gnu-
@@ -252,7 +252,7 @@ build_uboot() {
 			CROSS=aarch64-linux-gnu-
 			BL=bl31
 			;;
-		riscv)
+		riscv64)
 			# needs gcc-riscv64-linux-gnu
 			KERNELARCH=riscv
 			CROSS=riscv64-linux-gnu-
@@ -331,9 +331,9 @@ build_uboot() {
 			continue
 		fi
 
-		# riscv doesn't use a u-boot fit image, but instead encapsulates
+		# riscv64 doesn't use a u-boot fit image, but instead encapsulates
 		# the u-boot binary into a opensbi firmware image
-		if [ "$1" = "riscv" ]; then
+		if [ "$1" = "riscv64" ]; then
 			continue
 		fi
 
@@ -467,7 +467,7 @@ clean_kernel() {
 			KERNELARCH=arm64
 			CROSS=aarch64-linux-gnu-
 			;;
-		riscv)
+		riscv64)
 			# needs gcc-riscv64-linux-gnu
 			KERNELARCH=riscv
 			CROSS=riscv64-linux-gnu-
@@ -555,7 +555,7 @@ install_kernel() {
 			CROSS=aarch64-linux-gnu-
 			KERNELIMAGE=Image
 			;;
-		riscv)
+		riscv64)
 			# needs gcc-riscv64-linux-gnu
 			KERNELARCH=riscv
 			CROSS=riscv64-linux-gnu-
@@ -667,7 +667,7 @@ install_dtbs() {
 			KERNELARCH=arm64
 			SUBDIR="*/"
 			;;
-		riscv)
+		riscv64)
 			# needs gcc-riscv64-linux-gnu
 			KERNELARCH=riscv
 			SUBDIR="*/"
@@ -770,7 +770,7 @@ EOF
 	chmod +x _bootfarm/$2/flash_sd.sh
 }
 
-install_uboot_riscv() {
+install_uboot_riscv64() {
 	cp _build-$1/$2/u-boot.bin _bootfarm/$2
 	cp _build-$1/$2/u-boot.dtb _bootfarm/$2
 
@@ -860,7 +860,7 @@ install_uboot() {
 			KERNELARCH=arm64
 			CROSS=aarch64-linux-gnu-
 			;;
-		riscv)
+		riscv64)
 			# needs gcc-riscv64-linux-gnu
 			KERNELARCH=riscv
 			CROSS=riscv64-linux-gnu-
@@ -883,8 +883,8 @@ install_uboot() {
 			continue
 		fi
 
-		if [ "$1" = "riscv" ]; then
-			install_uboot_riscv $1 $c
+		if [ "$1" = "riscv64" ]; then
+			install_uboot_riscv64 $1 $c
 		else
 			install_uboot_rockchip $1 $c
 		fi
@@ -1077,7 +1077,7 @@ setup_imagedata() {
 		arm64)
 			KERNELIMAGE=Image
 			;;
-		riscv)
+		riscv64)
 			KERNELIMAGE=Image
 			;;
 		*)
