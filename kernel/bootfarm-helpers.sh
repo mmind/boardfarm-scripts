@@ -771,12 +771,16 @@ EOF
 }
 
 install_uboot_riscv64() {
+	if [ ! -d _bootfarm/$2 ]; then
+		mkdir _bootfarm/$2
+	fi
+
 	cp _build-$1/$2/u-boot.bin _bootfarm/$2
 	cp _build-$1/$2/u-boot.dtb _bootfarm/$2
 
 	U_BOOT_PATH=`pwd`/_bootfarm/$2
 
-	cat <<EOF > _bootfarm/$c/build_opensbi.sh
+	cat <<EOF > _bootfarm/$2/build_opensbi.sh
 function handle_file {
     inFile=\$1
     echo inFile: \$inFile
@@ -823,7 +827,8 @@ Start board and press a key on the keyloaders countdown
 
 Press 0 + Enter, wait for the C character being displayed.
 Press [Ctrl][a] [Ctrl][s]. Picocom will then ask for a file name,
-and you should type _bootfarm/$2/fw_payload.bin.out
+and you should type
+    _bootfarm/$2/fw_payload.bin.out
 EO2
 EOF
 
@@ -834,7 +839,7 @@ EOF
 	echo "--------------"
 	echo ""
 	echo "now change to the opensbi-sources and run"
-	echo "  `pwd`/_bootfarm/starfive_vic7100_beagle_v_smode/build_opensbi.sh"
+	echo "  `pwd`/_bootfarm/$2/build_opensbi.sh"
 }
 
 #
