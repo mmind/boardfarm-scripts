@@ -20,6 +20,11 @@ build_uimage_netboot() {
 build_netboot() {
 	local INST=$2
 
+	if [ ! -f /home/devel/nfs/kernel/$INST-kernel.its ]; then
+		echo "$INST: no netboot image to build"
+		return
+	fi
+
 	echo "$INST: building netboot image"
 	mkimage -D "-q" -f /home/devel/nfs/kernel/$INST-kernel.its /home/devel/nfs/kernel/tmp/$INST-vmlinux.uimg > /dev/null
 	cp /home/devel/nfs/kernel/tmp/$INST-vmlinux.uimg /home/devel/tftp/hstuebner/$INST.vmlinuz
