@@ -1,5 +1,7 @@
 #!/bin/bash -e
 
+. /home/devel/hstuebner/bootfarm/server/bootfarm-helpers.sh
+
 # FIXME: move to FIT image
 build_uimage() {
 	local ARCH=arm32
