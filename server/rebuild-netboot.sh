@@ -49,6 +49,7 @@ fi
 
 extract_dtbs arm32
 extract_dtbs arm64
+extract_dtbs riscv64
 
 # extract modules into nfsroot instances
 for i in `cat /home/devel/nfs/instances | grep -v "^#"`; do

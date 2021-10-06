@@ -38,6 +38,7 @@ update_chroot() {
 #update source repos
 update_chroot arm64 arm64-base
 update_chroot arm32 armhf-base
+update_chroot riscv64 riscv64-base
 
 #update real instances
 for i in `cat /home/devel/nfs/instances | grep -v "^#"`; do
