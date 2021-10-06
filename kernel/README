@@ -20,6 +20,8 @@ build_arm32.sh: arm32-specific subset of build_full.sh. Allows one parameter,
                 a defconfig to build; defaults to oldconfig
 build_arm64.sh: arm64-specific subset of build_full.sh. Allows one parameter,
                 a defconfig to build; defaults to oldconfig
+build_riscv64.sh: riscv64-specific subset of build_full.sh. Allows one parameter,
+                  a defconfig to build; defaults to oldconfig
 build_dtbs.sh: only build and distribute new devicetree files
 
 build_clean.sh: cleanup build directories
