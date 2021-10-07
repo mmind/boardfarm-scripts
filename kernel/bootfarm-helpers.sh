@@ -688,7 +688,12 @@ install_dtbs() {
 		rm _bootfarm/$1/dtbs-$1.tar.gz
 	fi
 
+	if [ -d _bootfarm/$1/dtbs ]; then
+		rm -rf _bootfarm/$1/dtbs
+	fi
+
 	mkdir _bootfarm/$1/dtbs
+
 	for i in $pattern; do
 		cp $i _bootfarm/$1/dtbs
 	done
