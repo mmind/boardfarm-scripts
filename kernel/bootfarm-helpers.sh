@@ -694,9 +694,12 @@ install_dtbs() {
 
 	mkdir _bootfarm/$1/dtbs
 
+	set +e
 	for i in $pattern; do
-		cp $i _bootfarm/$1/dtbs
+		cp $i _bootfarm/$1/dtbs 2>/dev/null
 	done
+	set -e
+
 	tar -C _bootfarm/$1/dtbs -czf _bootfarm/$1/dtbs-$1.tar.gz .
 	rm -rf _bootfarm/$1/dtbs
 
