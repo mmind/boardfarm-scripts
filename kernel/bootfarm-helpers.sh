@@ -851,8 +851,93 @@ EOF
 	echo "  `pwd`/_bootfarm/$2/build_opensbi.sh"
 }
 
+# Icicle board firmware build
+# We don't want the openSBI included in the hart-software-services, but instead
+# use our own (likely newer) sbi for testing.
+# Hence using the "custom" boot-flow for the hss parts.
+install_uboot_icicle() {
+	if [ ! -d _bootfarm/$2 ]; then
+		mkdir _bootfarm/$2
+	fi
+
+	cp _build-$1/$2/u-boot.bin _bootfarm/$2
+	cp _build-$1/$2/u-boot.dtb _bootfarm/$2
+	cp _build-$1/$2/u-boot-dtb.bin _bootfarm/$2
+
+	U_BOOT_PATH=`pwd`/_bootfarm/$2
+
+	cat << EOF > _bootfarm/$2/build_opensbi.sh
+ubootpath=\$(dirname \$0)
+make CROSS_COMPILE=riscv64-linux-gnu- ARCH=riscv PLATFORM=generic FW_PAYLOAD_PATH=${U_BOOT_PATH}/u-boot.bin FW_FDT_PATH=${U_BOOT_PATH}/u-boot.dtb
+cp build/platform/generic/firmware/fw_payload.bin \$ubootpath
+
+cat << EO2
+
+OpenSBI-Build finished
+----------------------
+
+now change to the hart-software-services and run
+  `pwd`/_bootfarm/$2/build_hss.sh
+
+EO2
+EOF
+
+	cat << EOF > _bootfarm/$2/build_hss.sh
+ubootpath=\$(dirname \$0)
+cp boards/mpfs-icicle-kit-es/def_config_custom .config
+make CROSS_COMPILE=riscv64-linux-gnu- BOARD=mpfs-icicle-kit-es
+
+cd tools/hss-payload-generator
+make
+
+cat << EO2 > \$ubootpath/hss-payload.yaml
+set-name: 'PolarFire-SoC-HSS::U-Boot-local'
+hart-entry-points: {u54_1: '0x80000000', u54_2: '0x80000000', u54_3: '0x80000000', u54_4: '0x80000000'}
+payloads:
+   \$ubootpath/fw_payload.bin: {exec-addr: '0x80000000', owner-hart: u54_1, secondary-hart: u54_2, secondary-hart: u54_3, secondary-hart: u54_4, priv-mode: prv_m}
+
+EO2
+
+./hss-payload-generator -c \$ubootpath/hss-payload.yaml \$ubootpath/hss-payload.bin
+
+cat << EO2
+
+HSS-Build finished
+------------------
+
+now poweron the device, stop the hss boot and run the
+
+    'usbdmsc'
+
+command to expose the emmc as usb mass storage device
+via the OTG port.
+
+Once that is available on the host, change back to the
+u-boot directory and do
+
+    dd if=_bootfarm/hss-payload.bin of=/dev/sdb2 bs=512
+
+Make sure that it's the correct drive ;-)
+
+EO2
+EOF
+
+	chmod +x _bootfarm/$2/build_opensbi.sh
+	chmod +x _bootfarm/$2/build_hss.sh
+
+	echo ""
+	echo "Build finished"
+	echo "--------------"
+	echo ""
+	echo "now change to the opensbi-sources and run"
+	echo "  `pwd`/_bootfarm/$2/build_opensbi.sh"
+}
+
 install_uboot_riscv64() {
 	case "$2" in
+		microchip_mpfs_icicle)
+			install_uboot_icicle $1 $2
+			;;
 		starfive_jh7100_starlight_smode)
 			install_uboot_beaglev $1 $2
 			;;
