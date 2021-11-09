@@ -779,7 +779,7 @@ EOF
 	chmod +x _bootfarm/$2/flash_sd.sh
 }
 
-install_uboot_riscv64() {
+install_uboot_beaglev() {
 	if [ ! -d _bootfarm/$2 ]; then
 		mkdir _bootfarm/$2
 	fi
@@ -849,6 +849,21 @@ EOF
 	echo ""
 	echo "now change to the opensbi-sources and run"
 	echo "  `pwd`/_bootfarm/$2/build_opensbi.sh"
+}
+
+install_uboot_riscv64() {
+	case "$2" in
+		starfive_jh7100_starlight_smode)
+			install_uboot_beaglev $1 $2
+			;;
+		*)
+			echo ""
+			echo "Build finished"
+			echo "--------------"
+			echo ""
+			echo "No firmware build-instructions for board $2"
+			;;
+	esac
 }
 
 #
