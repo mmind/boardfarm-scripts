@@ -779,6 +779,30 @@ EOF
 	chmod +x _bootfarm/$2/flash_sd.sh
 }
 
+#
+# Check and prepare opensbi installation
+# A number of RiscV board incorprorate the opensbi into their
+# build process and we want to access that target source through
+# a symlink. Check its existence and if needed create the opensbi
+# build directory.
+#
+prepare_opensbi() {
+	if [ ! -d _bootfarm/$2/opensbi ] && [ ! -h _bootfarm/$2/opensbi ]; then
+		echo ""
+		echo "Build aborted"
+		echo "-------------"
+		echo ""
+		echo "Please make your target opensbi available as _bootfarm/$2/opensbi"
+		echo "This can either be a subdirectory containing the sources,"
+		echo "or a symlink pointing to the target opensbi sources."
+		exit 1
+	fi
+
+	if [ ! -d _bootfarm/$2/opensbi/_build-$1 ]; then
+		mkdir _bootfarm/$2/opensbi/_build-$1
+	fi
+}
+
 install_uboot_beaglev() {
 	if [ ! -d _bootfarm/$2 ]; then
 		mkdir _bootfarm/$2
@@ -933,6 +957,62 @@ EOF
 	echo "  `pwd`/_bootfarm/$2/build_opensbi.sh"
 }
 
+install_uboot_nezha() {
+	if [ ! -d _bootfarm/$2 ]; then
+		mkdir _bootfarm/$2
+	fi
+
+	prepare_opensbi $1 $2
+
+	cd _bootfarm/$2/opensbi
+	make CROSS_COMPILE=riscv64-linux-gnu- ARCH=riscv PLATFORM=generic FW_PIC=y O=_build-$1/$2
+	cd ../../..
+
+	cp _build-$1/$2/u-boot-nodtb.bin _bootfarm/$2
+	cp _build-$1/$2/arch/riscv/dts/sun20i-d1-nezha.dtb _bootfarm/$2
+	cp _bootfarm/$2/opensbi/_build-$1/$2/platform/generic/firmware/fw_dynamic.bin _bootfarm/$2
+
+	cat << EOF > _bootfarm/$2/toc1.cfg
+[opensbi]
+file = _bootfarm/$2/fw_dynamic.bin
+addr = 0x40000000
+[dtb]
+file = _bootfarm/$2/sun20i-d1-nezha.dtb
+addr = 0x44000000
+[u-boot]
+file = _bootfarm/$2/u-boot-nodtb.bin
+addr = 0x4a000000
+EOF
+
+	_build-$1/$2/tools/mkimage -T sunxi_toc1 -d _bootfarm/$2/toc1.cfg _bootfarm/$2/u-boot.toc1
+
+	cat <<EOF > _bootfarm/$2/flash_sd.sh
+#!/bin/sh
+
+if [ "x\$1" = "x" ]; then
+	echo "Usage: flash_sd.sh target_device"
+	exit 1
+fi
+
+if [ ! -b \$1 ]; then
+	echo "target is not a block device"
+	exit 1
+fi
+
+dd if=u-boot.toc1 of=\$1 bs=512 seek=32800
+sync
+
+EOF
+	chmod +x _bootfarm/$2/flash_sd.sh
+
+	echo ""
+	echo "Build finished"
+	echo "--------------"
+	echo ""
+	echo "You can now use the flash_sd.sh script to write the image to an sd-card"
+	echo "Make sure the separate boot0 image is also present on the card"
+}
+
 install_uboot_riscv64() {
 	case "$2" in
 		microchip_mpfs_icicle)
@@ -940,6 +1020,9 @@ install_uboot_riscv64() {
 			;;
 		starfive_jh7100_starlight_smode)
 			install_uboot_beaglev $1 $2
+			;;
+		nezha)
+			install_uboot_nezha $1 $2
 			;;
 		*)
 			echo ""
