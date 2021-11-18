@@ -1,4 +1,4 @@
-#!/bin/sh -e
+#!/bin/bash -e
 
 . __maintainer-scripts/bootfarm-helpers.sh
 
