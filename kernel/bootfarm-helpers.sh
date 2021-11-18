@@ -808,71 +808,44 @@ install_uboot_beaglev() {
 		mkdir _bootfarm/$2
 	fi
 
-	cp _build-$1/$2/u-boot.bin _bootfarm/$2
-	cp _build-$1/$2/u-boot.dtb _bootfarm/$2
-
+	prepare_opensbi $1 $2
 	U_BOOT_PATH=`pwd`/_bootfarm/$2
 
-	cat <<EOF > _bootfarm/$2/build_opensbi.sh
-function handle_file {
-    inFile=\$1
-    echo inFile: \$inFile
-    outFile=\$inFile.out
+	cd _bootfarm/$2/opensbi
+	make CROSS_COMPILE=riscv64-linux-gnu- ARCH=riscv PLATFORM=generic FW_PAYLOAD_PATH=${U_BOOT_PATH}/u-boot.bin FW_FDT_PATH=${U_BOOT_PATH}/u-boot.dtb O=_build-$1/$2
+	cd ../../..
 
-    inSize=\`stat -c "%s" \$inFile\`
-    inSize32HexBe=\`printf "%08x\n" \$inSize\`
-    inSize32HexLe=\${inSize32HexBe:6:2}\${inSize32HexBe:4:2}\${inSize32HexBe:2:2}\${inSize32HexBe:0:2}
-    echo "inSize: \$inSize (0x\$inSize32HexBe, LE:0x\$inSize32HexLe)"
+	cp _build-$1/$2/u-boot.bin _bootfarm/$2
+	cp _build-$1/$2/u-boot.dtb _bootfarm/$2
+	cp _bootfarm/$2/opensbi/_build-$1/$2/platform/generic/firmware/fw_payload.bin _bootfarm/$2
 
-    echo \$inSize32HexLe | xxd -r -ps > \$outFile
-    cat \$inFile >> \$outFile
-    echo outFile: \$outFile
+	inFile=_bootfarm/$2/fw_payload.bin
+	outFile=$inFile.out
 
-    outSize=\`stat -c "%s" \$outFile\`
-    outSize32HexBe=\`printf "%08x\n" \$outSize\`
-    echo "outSize: \$outSize (0x\$outSize32HexBe)"
-}
+	inSize=`stat -c "%s" $inFile`
+	inSize32HexBe=`printf "%08x\n" $inSize`
+	inSize32HexLe=${inSize32HexBe:6:2}${inSize32HexBe:4:2}${inSize32HexBe:2:2}${inSize32HexBe:0:2}
 
-make CROSS_COMPILE=riscv64-linux-gnu- ARCH=riscv PLATFORM=generic FW_PAYLOAD_PATH=${U_BOOT_PATH}/u-boot.bin FW_FDT_PATH=${U_BOOT_PATH}/u-boot.dtb
+	echo $inSize32HexLe | xxd -r -ps > $outFile
+	cat $inFile >> $outFile
 
-if [ ! -d _bootfarm ]; then
-	mkdir _bootfarm
-fi
+	outSize=`stat -c "%s" $outFile`
+	outSize32HexBe=`printf "%08x\n" $outSize`
 
-if [ ! -d _bootfarm/$2 ]; then
-	mkdir _bootfarm/$2
-fi
-
-cp build/platform/generic/firmware/fw_payload.bin _bootfarm/$2
-handle_file _bootfarm/$2/fw_payload.bin
-
-cat << EO2
-
-Build finished
---------------
-
-Flash instructions:
-
-Start serial console as
-    picocom -b 115200 -s "sx -vv" /dev/ttyUSB0
-
-Start board and press a key on the keyloaders countdown
-
-Press 0 + Enter, wait for the C character being displayed.
-Press [Ctrl][a] [Ctrl][s]. Picocom will then ask for a file name,
-and you should type
-    _bootfarm/$2/fw_payload.bin.out
-EO2
-EOF
-
-	chmod +x _bootfarm/$2/build_opensbi.sh
-
-	echo ""
 	echo "Build finished"
 	echo "--------------"
 	echo ""
-	echo "now change to the opensbi-sources and run"
-	echo "  `pwd`/_bootfarm/$2/build_opensbi.sh"
+	echo "Flash instructions:"
+	echo ""
+	echo "Start serial console as"
+	echo "    picocom -b 115200 -s "sx -vv" /dev/ttyUSB0"
+	echo ""
+	echo "Start board and press a key on the keyloaders countdown"
+	echo ""
+	echo "Press 0 + Enter, wait for the C character being displayed."
+	echo "Press [Ctrl][a] [Ctrl][s]. Picocom will then ask for a file name,"
+	echo "and you should type"
+	echo "    _bootfarm/$2/fw_payload.bin.out"
 }
 
 # Icicle board firmware build
