@@ -857,77 +857,64 @@ install_uboot_icicle() {
 		mkdir _bootfarm/$2
 	fi
 
+	prepare_opensbi $1 $2
+	U_BOOT_PATH=`pwd`/_bootfarm/$2
+
+	cd _bootfarm/$2/opensbi
+	make CROSS_COMPILE=riscv64-linux-gnu- ARCH=riscv PLATFORM=generic FW_PAYLOAD_PATH=${U_BOOT_PATH}/u-boot.bin FW_FDT_PATH=${U_BOOT_PATH}/u-boot.dtb O=_build-$1/$2
+	cd ../../..
+
 	cp _build-$1/$2/u-boot.bin _bootfarm/$2
 	cp _build-$1/$2/u-boot.dtb _bootfarm/$2
 	cp _build-$1/$2/u-boot-dtb.bin _bootfarm/$2
+	cp _bootfarm/$2/opensbi/_build-$1/$2/platform/generic/firmware/fw_payload.bin _bootfarm/$2
 
-	U_BOOT_PATH=`pwd`/_bootfarm/$2
+	if [ ! -d _bootfarm/$2/hss ] && [ ! -h _bootfarm/$2/hss ]; then
+		echo ""
+		echo "Build aborted"
+		echo "-------------"
+		echo ""
+		echo "Please make your target Microchip HSS available as _bootfarm/$2/hss"
+		echo "This can either be a subdirectory containing the sources,"
+		echo "or a symlink pointing to the target opensbi sources."
+		exit 1
+	fi
 
-	cat << EOF > _bootfarm/$2/build_opensbi.sh
-ubootpath=\$(dirname \$0)
-make CROSS_COMPILE=riscv64-linux-gnu- ARCH=riscv PLATFORM=generic FW_PAYLOAD_PATH=${U_BOOT_PATH}/u-boot.bin FW_FDT_PATH=${U_BOOT_PATH}/u-boot.dtb
-cp build/platform/generic/firmware/fw_payload.bin \$ubootpath
+	cd _bootfarm/$2/hss
+	cp boards/mpfs-icicle-kit-es/def_config_custom .config
+	make CROSS_COMPILE=riscv64-linux-gnu- BOARD=mpfs-icicle-kit-es
+	cd tools/hss-payload-generator
+	make
+	cd ../..
+	cd ../../..
 
-cat << EO2
-
-OpenSBI-Build finished
-----------------------
-
-now change to the hart-software-services and run
-  `pwd`/_bootfarm/$2/build_hss.sh
-
-EO2
-EOF
-
-	cat << EOF > _bootfarm/$2/build_hss.sh
-ubootpath=\$(dirname \$0)
-cp boards/mpfs-icicle-kit-es/def_config_custom .config
-make CROSS_COMPILE=riscv64-linux-gnu- BOARD=mpfs-icicle-kit-es
-
-cd tools/hss-payload-generator
-make
-
-cat << EO2 > \$ubootpath/hss-payload.yaml
+	cat << EO2 > _bootfarm/$2/hss-payload.yaml
 set-name: 'PolarFire-SoC-HSS::U-Boot-local'
 hart-entry-points: {u54_1: '0x80000000', u54_2: '0x80000000', u54_3: '0x80000000', u54_4: '0x80000000'}
 payloads:
-   \$ubootpath/fw_payload.bin: {exec-addr: '0x80000000', owner-hart: u54_1, secondary-hart: u54_2, secondary-hart: u54_3, secondary-hart: u54_4, priv-mode: prv_m}
+   $U_BOOT_PATH/fw_payload.bin: {exec-addr: '0x80000000', owner-hart: u54_1, secondary-hart: u54_2, secondary-hart: u54_3, secondary-hart: u54_4, priv-mode: prv_m}
 
 EO2
-
-./hss-payload-generator -c \$ubootpath/hss-payload.yaml \$ubootpath/hss-payload.bin
-
-cat << EO2
-
-HSS-Build finished
-------------------
-
-now poweron the device, stop the hss boot and run the
-
-    'usbdmsc'
-
-command to expose the emmc as usb mass storage device
-via the OTG port.
-
-Once that is available on the host, change back to the
-u-boot directory and do
-
-    dd if=_bootfarm/hss-payload.bin of=/dev/sdb2 bs=512
-
-Make sure that it's the correct drive ;-)
-
-EO2
-EOF
-
-	chmod +x _bootfarm/$2/build_opensbi.sh
-	chmod +x _bootfarm/$2/build_hss.sh
+	_bootfarm/$2/hss/tools/hss-payload-generator/hss-payload-generator -c $U_BOOT_PATH/hss-payload.yaml $U_BOOT_PATH/hss-payload.bin
 
 	echo ""
 	echo "Build finished"
 	echo "--------------"
 	echo ""
-	echo "now change to the opensbi-sources and run"
-	echo "  `pwd`/_bootfarm/$2/build_opensbi.sh"
+	echo "now poweron the device, stop the hss boot and run the"
+	echo ""
+	echo "    'usbdmsc'"
+	echo ""
+	echo "command to expose the emmc as usb mass storage device"
+	echo "via the OTG port."
+	echo ""
+	echo "Once that is available on the host, change back to the"
+	echo "u-boot directory and do"
+	echo ""
+	echo "    dd if=_bootfarm/hss-payload.bin of=/dev/sdb2 bs=512"
+	echo ""
+	echo "Make sure that it's the correct drive ;-)"
+	echo ""
 }
 
 install_uboot_nezha() {
