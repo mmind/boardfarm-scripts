@@ -37,7 +37,7 @@ else
 
 	install_dtbs arm32 "rk"
 	install_dtbs arm64 "rk px30"
-	install_dtbs riscv64 "jh7100"
+	install_dtbs riscv64 "jh7100 sun20i-d1"
 
 	trigger_bootfarm
 fi

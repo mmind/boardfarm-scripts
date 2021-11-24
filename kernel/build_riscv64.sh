@@ -10,7 +10,7 @@ else
 	# assume building a linux-kernel
 	build_kernel riscv64 $1
 	install_kernel riscv64
-	install_dtbs riscv64 "jh7100"
+	install_dtbs riscv64 "jh7100 sun20i-d1"
 
 	trigger_bootfarm riscv64
 fi
