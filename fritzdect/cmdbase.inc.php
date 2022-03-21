@@ -13,7 +13,7 @@ class CmdBase
    * @param params Array der Default Werte, die von gesetzten Parameter ueberschrieben werden.
    * @return Array der Parameter
    */
-  public function ParseParams($params = array())
+  public static function ParseParams($params = array())
   {
     $intcnt = 0;
     for($i = 1; $i < $_SERVER["argc"]; $i++)
