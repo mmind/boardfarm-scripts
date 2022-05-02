@@ -58,6 +58,12 @@ build_kernel() {
 			CROSS=aarch64-linux-gnu-
 			IMAGE=Image
 			;;
+		riscv32)
+			# needs gcc-riscv64-linux-gnu
+			KERNELARCH=riscv
+			CROSS=riscv64-linux-gnu-
+			IMAGE=Image
+			;;
 		riscv64)
 			# needs gcc-riscv64-linux-gnu
 			KERNELARCH=riscv
@@ -111,6 +117,11 @@ build_dtbs() {
 			KERNELARCH=arm64
 			CROSS=aarch64-linux-gnu-
 			;;
+		riscv32)
+			# needs gcc-riscv64-linux-gnu
+			KERNELARCH=riscv
+			CROSS=riscv64-linux-gnu-
+			;;
 		riscv64)
 			# needs gcc-riscv64-linux-gnu
 			KERNELARCH=riscv
@@ -147,6 +158,11 @@ build_dtbscheck() {
 		arm64)
 			KERNELARCH=arm64
 			CROSS=aarch64-linux-gnu-
+			;;
+		riscv32)
+			# needs gcc-riscv64-linux-gnu
+			KERNELARCH=riscv
+			CROSS=riscv64-linux-gnu-
 			;;
 		riscv64)
 			# needs gcc-riscv64-linux-gnu
@@ -187,6 +203,11 @@ find_uboot_soc() {
 		arm64)
 			KERNELARCH=arm64
 			CROSS=aarch64-linux-gnu-
+			;;
+		riscv32)
+			# needs gcc-riscv64-linux-gnu
+			KERNELARCH=riscv
+			CROSS=riscv64-linux-gnu-
 			;;
 		riscv64)
 			# needs gcc-riscv64-linux-gnu
@@ -252,6 +273,11 @@ build_uboot() {
 			KERNELARCH=arm
 			CROSS=aarch64-linux-gnu-
 			BL=bl31
+			;;
+		riscv32)
+			# needs gcc-riscv64-linux-gnu
+			KERNELARCH=riscv
+			CROSS=riscv64-linux-gnu-
 			;;
 		riscv64)
 			# needs gcc-riscv64-linux-gnu
@@ -334,7 +360,7 @@ build_uboot() {
 
 		# riscv64 doesn't use a u-boot fit image, but instead encapsulates
 		# the u-boot binary into a opensbi firmware image
-		if [ "$1" = "riscv64" ]; then
+		if [ "$1" = "riscv32" ] || [ "$1" = "riscv64" ]; then
 			continue
 		fi
 
@@ -468,6 +494,11 @@ clean_kernel() {
 			KERNELARCH=arm64
 			CROSS=aarch64-linux-gnu-
 			;;
+		riscv32)
+			# needs gcc-riscv64-linux-gnu
+			KERNELARCH=riscv
+			CROSS=riscv64-linux-gnu-
+			;;
 		riscv64)
 			# needs gcc-riscv64-linux-gnu
 			KERNELARCH=riscv
@@ -554,6 +585,12 @@ install_kernel() {
 		arm64)
 			KERNELARCH=arm64
 			CROSS=aarch64-linux-gnu-
+			KERNELIMAGE=Image
+			;;
+		riscv32)
+			# needs gcc-riscv64-linux-gnu
+			KERNELARCH=riscv
+			CROSS=riscv64-linux-gnu-
 			KERNELIMAGE=Image
 			;;
 		riscv64)
@@ -666,6 +703,11 @@ install_dtbs() {
 			;;
 		arm64)
 			KERNELARCH=arm64
+			SUBDIR="*/"
+			;;
+		riscv32)
+			# needs gcc-riscv32-linux-gnu
+			KERNELARCH=riscv
 			SUBDIR="*/"
 			;;
 		riscv64)
@@ -1017,6 +1059,11 @@ install_uboot() {
 			KERNELARCH=arm64
 			CROSS=aarch64-linux-gnu-
 			;;
+		riscv32)
+			# needs gcc-riscv32-linux-gnu
+			KERNELARCH=riscv
+			CROSS=riscv64-linux-gnu-
+			;;
 		riscv64)
 			# needs gcc-riscv64-linux-gnu
 			KERNELARCH=riscv
@@ -1232,6 +1279,9 @@ setup_imagedata() {
 			KERNELIMAGE=zImage
 			;;
 		arm64)
+			KERNELIMAGE=Image
+			;;
+		riscv32)
 			KERNELIMAGE=Image
 			;;
 		riscv64)
