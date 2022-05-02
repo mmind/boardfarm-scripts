@@ -17,4 +17,6 @@ else
 	# assume building a linux-kernel
 	clean_kernel arm32
 	clean_kernel arm64
+	clean_kernel riscv32
+	clean_kernel riscv64
 fi
