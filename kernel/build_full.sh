@@ -26,6 +26,13 @@ elif [ -d core/tee ]; then
 
 	install_optee arm32 $1
 	install_optee arm64 $1
+elif [ -d platform/generic ]; then
+	# we're building opensbi
+	build_opensbi riscv32 dynamic
+	build_opensbi riscv64 dynamic
+
+	install_opensbi riscv32 dynamic
+	install_opensbi riscv64 dynamic
 else
 	build_kernel arm32
 	build_kernel arm64

@@ -431,6 +431,70 @@ build_atf() {
 }
 
 #
+# Build opensbi-binaries
+#
+# $1: architecture
+# $2: board
+# $3: opensbi-platform - default generic
+# $4: fw_payload_path
+# $5: fw_fdt_path
+#
+build_opensbi() {
+	create_icecc_env
+	export ICECC_VERSION
+
+	case "$1" in
+		riscv32)
+			# needs gcc-riscv64-linux-gnu
+			KERNELARCH=riscv
+			CROSS=riscv64-linux-gnu-
+			XLEN=32
+			;;
+		riscv64)
+			# needs gcc-riscv64-linux-gnu
+			KERNELARCH=riscv
+			CROSS=riscv64-linux-gnu-
+			XLEN=64
+			;;
+		*)
+			echo "unsupported architecture $1"
+			exit 1
+			;;
+	esac
+
+	if [ -d /usr/lib/icecc ] && [ -f __maintainer-scripts/toolchains/gcc11-amd64-amd64.tar.gz ]; then
+		echo "using icecc"
+		export PATH=/usr/lib/icecc/bin:$PATH
+	fi
+
+	if [ ! -d _build-$1 ]; then
+		mkdir _build-$1
+	fi
+
+	if [ "x$3" = "x" ]; then
+		plat=generic
+		flag=""
+	else
+		plat=`echo $3 | cut -d "-" -f 1`
+		flag=`echo $3 | cut -d "-" -f 2`
+	fi
+
+	if [ "$flag" = "pic" ]; then
+		fw_pic=" FW_PIC=y"
+	fi
+
+	if [ "x$4" != "x" ]; then
+		fw_payload=" FW_PAYLOAD_PATH=$4"
+	fi
+
+	if [ "x$5" != "x" ]; then
+		fw_fdt=" FW_FDT_PATH=$5"
+	fi
+
+	make CROSS_COMPILE=${CROSS} ARCH=riscv PLATFORM_RISCV_XLEN=${XLEN} PLATFORM=${plat} ${fw_payload}${fw_fdt}${fw_pic} O=_build-$1/$2
+}
+
+#
 # Build optee for a target
 # Cross-compilers are hardcoded for the standard packaged
 # cross-compilers on a Debian system
@@ -773,6 +837,44 @@ install_dtbs() {
 	fi
 }
 
+install_opensbi() {
+	install_setup $1
+
+	case "$1" in
+		riscv32)
+			# needs gcc-riscv64-linux-gnu
+			KERNELARCH=riscv32
+			CROSS=riscv64-linux-gnu-
+			XLEN=32
+			;;
+		riscv64)
+			# needs gcc-riscv64-linux-gnu
+			KERNELARCH=riscv64
+			CROSS=riscv64-linux-gnu-
+			XLEN=64
+			;;
+		*)
+			echo "unsupported architecture $1"
+			exit 1
+			;;
+	esac
+
+	if [ ! -d _bootfarm/$2 ]; then
+		mkdir _bootfarm/$2
+	fi
+
+	if [ "x$3" = "x" ]; then
+		plat=generic
+		flag=""
+	else
+		plat=`echo $3 | cut -d "-" -f 1`
+		flag=`echo $3 | cut -d "-" -f 2`
+	fi
+
+	cp _build-$1/$2/platform/${plat}/firmware/fw_dynamic.bin _bootfarm/$2/opensbi-${KERNELARCH}-${plat}-fw_dynamic.bin
+	cp _build-$1/$2/platform/${plat}/firmware/fw_dynamic.elf _bootfarm/$2/opensbi-${KERNELARCH}-${plat}-fw_dynamic.elf
+}
+
 install_uboot_rockchip() {
 	plat=$(find_uboot_soc $1 $2)
 	echo "Platform $plat"
@@ -825,6 +927,7 @@ EOF
 
 #
 # Check and prepare opensbi installation
+#
 # A number of RiscV board incorprorate the opensbi into their
 # build process and we want to access that target source through
 # a symlink. Check its existence and if needed create the opensbi
@@ -856,7 +959,7 @@ install_uboot_beaglev() {
 	U_BOOT_PATH=`pwd`/_bootfarm/$2
 
 	cd _bootfarm/$2/opensbi
-	make CROSS_COMPILE=riscv64-linux-gnu- ARCH=riscv PLATFORM=generic FW_PAYLOAD_PATH=${U_BOOT_PATH}/u-boot.bin FW_FDT_PATH=${U_BOOT_PATH}/u-boot.dtb O=_build-$1/$2
+	build_opensbi $1 $2 generic ${U_BOOT_PATH}/u-boot.bin FW_FDT_PATH=${U_BOOT_PATH}/u-boot.dtb
 	cd ../../..
 
 	cp _build-$1/$2/u-boot.bin _bootfarm/$2
@@ -905,7 +1008,7 @@ install_uboot_icicle() {
 	U_BOOT_PATH=`pwd`/_bootfarm/$2
 
 	cd _bootfarm/$2/opensbi
-	make CROSS_COMPILE=riscv64-linux-gnu- ARCH=riscv PLATFORM=generic FW_PAYLOAD_PATH=${U_BOOT_PATH}/u-boot.bin FW_FDT_PATH=${U_BOOT_PATH}/u-boot.dtb O=_build-$1/$2
+	build_opensbi $1 $2 generic ${U_BOOT_PATH}/u-boot.bin FW_FDT_PATH=${U_BOOT_PATH}/u-boot.dtb
 	cd ../../..
 
 	cp _build-$1/$2/u-boot.bin _bootfarm/$2
@@ -969,7 +1072,7 @@ install_uboot_nezha() {
 	prepare_opensbi $1 $2
 
 	cd _bootfarm/$2/opensbi
-	make CROSS_COMPILE=riscv64-linux-gnu- ARCH=riscv PLATFORM=generic FW_PIC=y O=_build-$1/$2
+	build_opensbi $1 $2 generic-pic
 	cd ../../..
 
 	cp _build-$1/$2/u-boot-nodtb.bin _bootfarm/$2

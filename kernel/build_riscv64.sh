@@ -6,6 +6,10 @@ if [ -d common/spl ]; then
 	# we're building u-boot
 	build_uboot riscv64 $1
 	install_uboot riscv64 $1
+elif [ -d platform/generic ]; then
+	# we're building opensbi
+	build_opensbi riscv64 dynamic
+	install_opensbi riscv64 dynamic
 else
 	# assume building a linux-kernel
 	build_kernel riscv64 $1
