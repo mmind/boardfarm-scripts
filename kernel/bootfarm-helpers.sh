@@ -17,22 +17,24 @@ socs="rk3036 rk3066a rk3188 $atf32 $atf64"
 create_icecc_env() {
 	HOSTARCH=`uname -m`
 
-	case "$HOSTARCH" in
-		x86_64)
-			ICECC_VERSION=`pwd`/__maintainer-scripts/toolchains/gcc11-amd64-amd64.tar.gz=x86_64-linux-gnu
-			ICECC_VERSION=$ICECC_VERSION,`pwd`/__maintainer-scripts/toolchains/gcc11-amd64-armhf.tar.gz=arm-linux-gnueabihf
-			ICECC_VERSION=$ICECC_VERSION,`pwd`/__maintainer-scripts/toolchains/gcc11-amd64-aarch64.tar.gz=aarch64-linux-gnu
-			ICECC_VERSION=$ICECC_VERSION,`pwd`/__maintainer-scripts/toolchains/gcc11-amd64-riscv64.tar.gz=riscv64-linux-gnu
-			;;
-		aarch64)
-			ICECC_VERSION=`pwd`/__maintainer-scripts/toolchains/gcc10-aarch64.tar.gz
-			ICECC_VERSION=$ICECC_VERSION,`pwd`/__maintainer-scripts/toolchains/gcc10-armhf.tar.gz=arm-linux-gnueabihf
-			;;
-		*)
-			echo "unsupported host architecture $HOSTARCH"
-			exit 1
-			;;
-	esac
+# newer icecc versions seem to be able to handle this automatically now?
+# FIXME: double-check
+#	case "$HOSTARCH" in
+#		x86_64)
+#			ICECC_VERSION=`pwd`/__maintainer-scripts/toolchains/gcc11-amd64-amd64.tar.gz=x86_64-linux-gnu
+#			ICECC_VERSION=$ICECC_VERSION,`pwd`/__maintainer-scripts/toolchains/gcc11-amd64-armhf.tar.gz=arm-linux-gnueabihf
+#			ICECC_VERSION=$ICECC_VERSION,`pwd`/__maintainer-scripts/toolchains/gcc11-amd64-aarch64.tar.gz=aarch64-linux-gnu
+#			ICECC_VERSION=$ICECC_VERSION,`pwd`/__maintainer-scripts/toolchains/gcc11-amd64-riscv64.tar.gz=riscv64-linux-gnu
+#			;;
+#		aarch64)
+#			ICECC_VERSION=`pwd`/__maintainer-scripts/toolchains/gcc10-aarch64.tar.gz
+#			ICECC_VERSION=$ICECC_VERSION,`pwd`/__maintainer-scripts/toolchains/gcc10-armhf.tar.gz=arm-linux-gnueabihf
+#			;;
+#		*)
+#			echo "unsupported host architecture $HOSTARCH"
+#			exit 1
+#			;;
+#	esac
 }
 
 #
