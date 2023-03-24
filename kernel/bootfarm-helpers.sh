@@ -1369,6 +1369,44 @@ unpack_modules() {
 	fi
 }
 
+install_config() {
+	local ARCH=$1
+	local INST=$2
+	local TARGET=$3
+	local KVER=`cat /home/devel/nfs/kernel/$ARCH/kernel.release`
+
+	if [ -d $TARGET/boot ]; then
+		set +e
+		rm -rf $TARGET/boot/config-*
+		set -e
+	else
+		sudo mkdir $TARGET/boot
+		sudo chown hstuebner.hstuebner $TARGET/boot
+	fi
+
+	if [ ! -w $TARGET/boot ]; then
+		sudo chown hstuebner.hstuebner $TARGET/boot
+	fi
+
+	if [ -d /home/devel/nfs/kernel/$INST ]; then
+		if [ ! -f /home/devel/nfs/kernel/$INST/config ]; then
+			echo "$INST: no kernel config to install"
+			return
+		fi
+
+		echo "$INST: installing kernel config"
+		cp /home/devel/nfs/kernel/$INST/config $TARGET/boot/config-$KVER
+	else
+		if [ ! -f /home/devel/nfs/kernel/$ARCH/config ]; then
+			echo "$INST: no $ARCH kernel config to install"
+			return
+		fi
+
+		echo "$INST: installing $ARCH kernel config"
+		cp /home/devel/nfs/kernel/$ARCH/config $TARGET/boot/config-$KVER
+	fi
+}
+
 #
 # Setup data for the local image generation.
 # This includes getting the kernel image from the build directory
