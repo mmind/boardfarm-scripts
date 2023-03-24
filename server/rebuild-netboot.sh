@@ -76,8 +76,8 @@ for i in `cat /home/devel/nfs/instances | grep -v "^#"`; do
 	setup_modules $ARCH $INST /home/devel/nfs/rootfs-$INST
 	unpack_modules $ARCH $INST /home/devel/nfs/rootfs-$INST
 
-	# only build initramfs for arm64 for now
-	if [ "$ARCH" = "arm64" ]; then
+	# only build initramfs for arm64 and riscv64
+	if [ "$ARCH" = "arm64" ] || [ "$ARCH" = "riscv64" ]; then
 		sudo /home/devel/hstuebner/bootfarm/server/rebuild-initramfs.sh $ARCH $INST
 	fi
 
