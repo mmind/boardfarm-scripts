@@ -1427,6 +1427,11 @@ build_initramfs() {
 	local KVER=`cat /home/devel/nfs/kernel/$ARCH/kernel.release`
 	local CHROOTEXEC="/usr/sbin/chroot $BUILDPLACE "
 
+	if [ ! -f $BUILDPLACE/usr/sbin/update-initramfs ]; then
+		echo "$INST: skipping initramfs for $KVER - initramfs-tools not installed"
+		return
+	fi
+
 	echo "$INST: creating initramfs for $KVER"
 	set +e
 	$CHROOTEXEC update-initramfs -d -k $KVER >/dev/null 2>&1
