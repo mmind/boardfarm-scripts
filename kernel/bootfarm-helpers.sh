@@ -3,7 +3,7 @@ bootfarmip=192.168.140.1
 
 # supported atf platforms
 atf32="rk3288"
-atf64="px30 rk3328 rk3368 rk3399"
+atf64="px30 rk3328 rk3368 rk3399 rk3568 rk3588"
 
 # supported optee platforms
 optee32="rk322x"
@@ -914,7 +914,7 @@ install_opensbi() {
 	cp _build-$1/$2/platform/${plat}/firmware/fw_dynamic.elf _bootfarm/$2/opensbi-${KERNELARCH}-${plat}-fw_dynamic.elf
 }
 
-install_uboot_rockchip() {
+install_uboot_rockchip_legacy() {
 	plat=$(find_uboot_soc $1 $2)
 	echo "Platform $plat"
 
@@ -962,6 +962,62 @@ sync
 EOF
 
 	chmod +x _bootfarm/$2/flash_sd.sh
+}
+
+install_uboot_rockchip() {
+	plat=$(find_uboot_soc $1 $2)
+	echo "Platform $plat"
+
+	if [ ! -d _bootfarm/$2 ]; then
+		mkdir _bootfarm/$2
+	fi
+
+	# Copy things from build to install dir
+	cp _build-$1/$2/idbloader.img _bootfarm/$2
+	cp _build-$1/$2/u-boot.itb _bootfarm/$2
+	if [ -f _bootfarm/$2/LOADER ] && [ -f _build-$1/$2/u-boot-rockchip.bin ]; then
+		cp _build-$1/$2/u-boot-rockchip.bin _bootfarm/$2
+	fi
+
+	# read raw offset to load the u-boot binary from and create a
+	# flash script to write both parts (spl/tpl+spl and uboot iself)
+	# to a sd-card
+	sd_offs=`cat _build-$1/$2/u-boot.cfg | grep CONFIG_SYS_MMCSD_RAW_MODE_U_BOOT_SECTOR | cut -d " " -f 3`
+	cat <<EOF > _bootfarm/$c/flash_sd.sh
+#!/bin/sh
+
+if [ "x\$1" = "x" ]; then
+	echo "Usage: flash_sd.sh target_device"
+	exit 1
+fi
+
+if [ ! -b \$1 ]; then
+	echo "target is not a block device"
+	exit 1
+fi
+
+dd if=idbloader.img of=\$1 seek=64
+dd if=u-boot.itb of=\$1 seek=$(($sd_offs))
+sync
+
+EOF
+
+	chmod +x _bootfarm/$2/flash_sd.sh
+
+	if [ -f _bootfarm/$2/LOADER ]; then
+		cp _bootfarm/$2/LOADER _bootfarm/$2/spl_loader.bin
+
+	cat <<EOF > _bootfarm/$c/flash_rkdeveloptool.sh
+#!/bin/sh
+
+rkdeveloptool db spl_loader.bin
+rkdeveloptool wl 64 u-boot-rockchip.bin
+
+EOF
+
+		chmod +x _bootfarm/$2/flash_rkdeveloptool.sh
+	fi
+
 }
 
 #
@@ -1234,7 +1290,12 @@ install_uboot() {
 		if [ "$1" = "riscv64" ]; then
 			install_uboot_riscv64 $1 $c
 		else
-			install_uboot_rockchip $1 $c
+
+			if [ -f _build-$1/$c/idbloader.img ]; then
+				install_uboot_rockchip $1 $c
+			else
+				install_uboot_rockchip_legacy $1 $c
+			fi
 		fi
 	done
 
