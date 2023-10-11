@@ -340,8 +340,15 @@ build_uboot() {
 #			continue
 #		fi
 
+		ext=""
+
+		# Link BL31 binary if it exists
+		if [ -f _bootfarm/$c/BL31 ]; then
+			ext="$ext BL31=_bootfarm/$c/BL31"
+		fi
+
 		# make the boards defconfig - this also creates the build dir
-		make ARCH=$KERNELARCH CROSS_COMPILE=$CROSS O=_build-$1/$c ${c}_defconfig
+		make $ext ARCH=$KERNELARCH CROSS_COMPILE=$CROSS O=_build-$1/$c ${c}_defconfig
 		ret=$?
 		if [ "x$ret" != "x0" ]; then
 			continue
@@ -349,12 +356,12 @@ build_uboot() {
 
 		# if needed check for the presence of the ATF binary
 		needsatf=$(find_uboot_isatf $1 $c)
-		if [ "$needsatf" = "atf" ] && [ ! -f _build-$1/$c/$BL.elf ]; then
-			echo "$c: missing $BL.elf"
+		if [ "$needsatf" = "atf" ] && [ ! -f _build-$1/$c/$BL.elf ] && [ ! -f _bootfarm/$c/BL31 ]; then
+			echo "$c: missing $BL.elf or _bootfarm/$c/BL31 reference"
 			exit 1
 		fi
 
-		make ARCH=$KERNELARCH CROSS_COMPILE=$CROSS O=_build-$1/$c -j14
+		make $ext ARCH=$KERNELARCH CROSS_COMPILE=$CROSS O=_build-$1/$c -j14
 		ret=$?
 		if [ "x$ret" != "x0" ]; then
 			continue
@@ -366,10 +373,13 @@ build_uboot() {
 			continue
 		fi
 
-		make ARCH=$KERNELARCH CROSS_COMPILE=$CROSS O=_build-$1/$c -j14 u-boot.itb
-		ret=$?
-		if [ "x$ret" != "x0" ]; then
-			continue
+		# old style build process needs to build u-boot.itb separately
+		if [ ! -f _build-$1/$c/u-boot-rockchip.bin ]; then
+			make ARCH=$KERNELARCH CROSS_COMPILE=$CROSS O=_build-$1/$c -j14 u-boot.itb
+			ret=$?
+			if [ "x$ret" != "x0" ]; then
+				continue
+			fi
 		fi
 
 		set -e
