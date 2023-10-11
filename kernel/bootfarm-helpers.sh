@@ -253,6 +253,22 @@ find_uboot_isatf() {
 	fi
 }
 
+# Determine if the uboot build will require external TPL
+#
+# $1: target arch (arm32, arm64)
+# $2: target build
+#
+find_uboot_rkexternal() {
+	set +e
+	cat _build-$1/$2/.config | cut -d " " -f 2 | grep -i "CONFIG_ROCKCHIP_EXTERNAL_TPL=y" > /dev/null
+	ret=$?
+	set -e
+	if [ "x$ret" = "x0" ]; then
+		echo "ext"
+		return
+	fi
+}
+
 #
 # Build u-boot for a target
 # Cross-compilers are hardcoded for the standard packaged
@@ -342,6 +358,12 @@ build_uboot() {
 
 		ext=""
 
+		# Some Rockchip builds need an external TPL binary for DDR init
+		needstpl=$(find_uboot_rkexternal $1 $c)
+		if [ "$needstpl" = "ext" ] && [ -f _bootfarm/$c/TPL ]; then
+			ext="$ext ROCKCHIP_TPL=_bootfarm/$c/TPL"
+		fi
+
 		# Link BL31 binary if it exists
 		if [ -f _bootfarm/$c/BL31 ]; then
 			ext="$ext BL31=_bootfarm/$c/BL31"
@@ -358,6 +380,13 @@ build_uboot() {
 		needsatf=$(find_uboot_isatf $1 $c)
 		if [ "$needsatf" = "atf" ] && [ ! -f _build-$1/$c/$BL.elf ] && [ ! -f _bootfarm/$c/BL31 ]; then
 			echo "$c: missing $BL.elf or _bootfarm/$c/BL31 reference"
+			exit 1
+		fi
+
+		# if needed check for the presence of the TPL binary
+		needstpl=$(find_uboot_rkexternal $1 $c)
+		if [ "$needstpl" = "ext" ] && [ ! -f _bootfarm/$c/TPL ]; then
+			echo "$c: missing TPL binary in _bootfarm/$c/TPL"
 			exit 1
 		fi
 
