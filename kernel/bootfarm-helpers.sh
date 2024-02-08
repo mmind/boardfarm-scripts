@@ -177,16 +177,13 @@ build_dtbscheck() {
 			;;
 	esac
 
-	if [ "x$2" = "x" ]; then
-		conf="oldconfig"
+	if [ "$2" = "all" ]; then
+		make ARCH=$KERNELARCH CROSS_COMPILE=$CROSS O=_build-$1 -j8 dtbs
+		make ARCH=$KERNELARCH CROSS_COMPILE=$CROSS O=_build-$1 -j8 dt_binding_check
+		make ARCH=$KERNELARCH CROSS_COMPILE=$CROSS O=_build-$1 -j8 dtbs_check
 	else
-		conf=$2
+		make ARCH=$KERNELARCH CROSS_COMPILE=$CROSS O=_build-$1 CHECK_DTBS=y -j8 $2
 	fi
-
-	make ARCH=$KERNELARCH CROSS_COMPILE=$CROSS O=_build-$1 $conf
-	make ARCH=$KERNELARCH CROSS_COMPILE=$CROSS O=_build-$1 -j8 dtbs
-	make ARCH=$KERNELARCH CROSS_COMPILE=$CROSS O=_build-$1 -j8 dt_binding_check
-	make ARCH=$KERNELARCH CROSS_COMPILE=$CROSS O=_build-$1 -j8 dtbs_check
 }
 
 # Find out the soc uboot was built for
