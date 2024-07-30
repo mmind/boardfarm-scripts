@@ -388,12 +388,6 @@ build_uboot() {
 
 		ext=""
 
-		# Some Rockchip builds need an external TPL binary for DDR init
-		needstpl=$(find_uboot_rkexternal $1 $c)
-		if [ "$needstpl" = "ext" ] && [ -f _bootfarm/$c/TPL ]; then
-			ext="$ext ROCKCHIP_TPL=_bootfarm/$c/TPL"
-		fi
-
 		# Link BL31 binary if it exists
 		if [ -f _bootfarm/$c/BL31 ]; then
 			ext="$ext BL31=_bootfarm/$c/BL31"
@@ -404,6 +398,12 @@ build_uboot() {
 		ret=$?
 		if [ "x$ret" != "x0" ]; then
 			continue
+		fi
+
+		# Some Rockchip builds need an external TPL binary for DDR init
+		needstpl=$(find_uboot_rkexternal $1 $c)
+		if [ "$needstpl" = "ext" ] && [ -f _bootfarm/$c/TPL ]; then
+			ext="$ext ROCKCHIP_TPL=_bootfarm/$c/TPL"
 		fi
 
 		# if needed check for the presence of the ATF binary
