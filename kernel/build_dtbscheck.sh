@@ -14,11 +14,16 @@ else
 	board=$2
 fi
 
-for arch in arm32 arm64 riscv32 riscv64; do
-	if [ "$target" != "all" ] && [ "$arch" != "$target" ]; then
-		echo "skipping $arch, not target $target"
-		continue
-	fi
 
-	build_dtbscheck $arch $board
-done
+if [ "$target" = "yaml" ]; then
+	build_dtbindingcheck arm64 $board
+else
+	for arch in arm32 arm64 riscv32 riscv64; do
+		if [ "$target" != "all" ] && [ "$arch" != "$target" ]; then
+			echo "skipping $arch, not target $target"
+			continue
+		fi
+
+		build_dtbscheck $arch $board
+	done
+fi
