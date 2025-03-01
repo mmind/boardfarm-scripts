@@ -17,6 +17,20 @@ socs="rk3036 rk3066a rk3188 $atf32 $atf64"
 create_icecc_env() {
 	HOSTARCH=`uname -m`
 
+	# Try to calculate a sane number of threads
+	# On its home-IP, there is Ryzen 5900X waiting behind the icecc
+	# scheduler, while "on the road" we don't want to overwhelm the
+	# way smaller x270
+	set +e
+	myip=`/sbin/ifconfig | sed -En 's/127.0.0.1//;s/.*inet (addr:)?(([0-9]*\.){3}[0-9]*).*/\2/p' | grep "192.168.137.171"`
+	RET=$?
+	set -e
+	if [ "$RET" = "0" ]; then
+		CC_NUM_THREAD=28
+	else
+		CC_NUM_THREAD=4
+	fi
+
 # newer icecc versions seem to be able to handle this automatically now?
 # FIXME: double-check
 #	case "$HOSTARCH" in
@@ -90,14 +104,14 @@ build_kernel() {
 	fi
 
 	make ARCH=$KERNELARCH CROSS_COMPILE=$CROSS KCPPFLAGS="-fno-pic -Wno-pointer-sign" O=_build-$1 $conf
-	make ARCH=$KERNELARCH CROSS_COMPILE=$CROSS KCPPFLAGS="-fno-pic -Wno-pointer-sign" O=_build-$1 -j14 $IMAGE
+	make ARCH=$KERNELARCH CROSS_COMPILE=$CROSS KCPPFLAGS="-fno-pic -Wno-pointer-sign" O=_build-$1 -j${CC_NUM_THREAD} $IMAGE
 
 	set +e
 	cat _build-$1/.config | grep "CONFIG_MODULES=y" > /dev/null
 	ret=$?
 	set -e
 	if [ "x$ret" = "x0" ]; then
-		make ARCH=$KERNELARCH CROSS_COMPILE=$CROSS KCPPFLAGS="-fno-pic -Wno-pointer-sign" O=_build-$1 -j14 modules
+		make ARCH=$KERNELARCH CROSS_COMPILE=$CROSS KCPPFLAGS="-fno-pic -Wno-pointer-sign" O=_build-$1 -j${CC_NUM_THREAD} modules
 	fi
 
 	build_dtbs $1
@@ -420,7 +434,7 @@ build_uboot() {
 			exit 1
 		fi
 
-		make $ext ARCH=$KERNELARCH CROSS_COMPILE=$CROSS O=_build-$1/$c -j14
+		make $ext ARCH=$KERNELARCH CROSS_COMPILE=$CROSS O=_build-$1/$c -j${CC_NUM_THREAD}
 		ret=$?
 		if [ "x$ret" != "x0" ]; then
 			continue
@@ -434,7 +448,7 @@ build_uboot() {
 
 		# old style build process needs to build u-boot.itb separately
 		if [ ! -f _build-$1/$c/u-boot-rockchip.bin ]; then
-			make ARCH=$KERNELARCH CROSS_COMPILE=$CROSS O=_build-$1/$c -j14 u-boot.itb
+			make ARCH=$KERNELARCH CROSS_COMPILE=$CROSS O=_build-$1/$c -j${CC_NUM_THREAD} u-boot.itb
 			ret=$?
 			if [ "x$ret" != "x0" ]; then
 				continue
@@ -495,7 +509,7 @@ build_atf() {
 
 		echo "$p: building atf with $BL"
 		make ARCH=$KERNELARCH CROSS_COMPILE=$CROSS PLAT=$p clean > /dev/null
-		make ARCH=$KERNELARCH CROSS_COMPILE=$CROSS PLAT=$p -j14 $BL > /dev/null
+		make ARCH=$KERNELARCH CROSS_COMPILE=$CROSS PLAT=$p -j${CC_NUM_THREAD} $BL > /dev/null
 	done
 }
 
@@ -610,7 +624,7 @@ build_optee() {
 		fi
 
 		echo "$p: building optee"
-		make $CROSS CFG_WERROR=y PLATFORM=rockchip PLATFORM_FLAVOR=$p O=_build-$1/$p -j14 all > /dev/null
+		make $CROSS CFG_WERROR=y PLATFORM=rockchip PLATFORM_FLAVOR=$p O=_build-$1/$p -j${CC_NUM_THREAD} all > /dev/null
 	done
 }
 
