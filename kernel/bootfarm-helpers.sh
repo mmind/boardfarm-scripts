@@ -57,6 +57,38 @@ create_icecc_env() {
 }
 
 #
+# Set the core cross compile environment vars
+#
+# $1: target arch (arm32, arm64)
+#
+create_build_env() {
+	case "$1" in
+		arm32)
+			KERNELARCH=arm
+			CROSS=arm-linux-gnueabihf-
+			;;
+		arm64)
+			KERNELARCH=arm64
+			CROSS=aarch64-linux-gnu-
+			;;
+		riscv32)
+			# needs gcc-riscv64-linux-gnu
+			KERNELARCH=riscv
+			CROSS=riscv64-linux-gnu-
+			;;
+		riscv64)
+			# needs gcc-riscv64-linux-gnu
+			KERNELARCH=riscv
+			CROSS=riscv64-linux-gnu-
+			;;
+		*)
+			echo "unsupported architecture $1"
+			exit 1
+			;;
+	esac
+}
+
+#
 # Build kernel and modules for an architecture
 # Cross-compilers are hardcoded for the standard packaged
 # cross-compilers on a Debian system
@@ -66,33 +98,14 @@ create_icecc_env() {
 #
 build_kernel() {
 	create_icecc_env
+	create_build_env $1
 
 	case "$1" in
 		arm32)
-			KERNELARCH=arm
-			CROSS=arm-linux-gnueabihf-
 			IMAGE=zImage
 			;;
-		arm64)
-			KERNELARCH=arm64
-			CROSS=aarch64-linux-gnu-
-			IMAGE=Image
-			;;
-		riscv32)
-			# needs gcc-riscv64-linux-gnu
-			KERNELARCH=riscv
-			CROSS=riscv64-linux-gnu-
-			IMAGE=Image
-			;;
-		riscv64)
-			# needs gcc-riscv64-linux-gnu
-			KERNELARCH=riscv
-			CROSS=riscv64-linux-gnu-
-			IMAGE=Image
-			;;
 		*)
-			echo "unsupported architecture $1"
-			exit 1
+			IMAGE=Image
 			;;
 	esac
 
@@ -123,30 +136,7 @@ build_kernel() {
 # $2: config to build (default oldconfig)
 #
 build_dtbs() {
-	case "$1" in
-		arm32)
-			KERNELARCH=arm
-			CROSS=arm-linux-gnueabihf-
-			;;
-		arm64)
-			KERNELARCH=arm64
-			CROSS=aarch64-linux-gnu-
-			;;
-		riscv32)
-			# needs gcc-riscv64-linux-gnu
-			KERNELARCH=riscv
-			CROSS=riscv64-linux-gnu-
-			;;
-		riscv64)
-			# needs gcc-riscv64-linux-gnu
-			KERNELARCH=riscv
-			CROSS=riscv64-linux-gnu-
-			;;
-		*)
-			echo "unsupported architecture $1"
-			exit 1
-			;;
-	esac
+	create_build_env $1
 
 	if [ "x$2" = "x" ]; then
 		conf="oldconfig"
@@ -165,30 +155,7 @@ build_dtbs() {
 # $2: config to build (default oldconfig)
 #
 build_dtbscheck() {
-	case "$1" in
-		arm32)
-			KERNELARCH=arm
-			CROSS=arm-linux-gnueabihf-
-			;;
-		arm64)
-			KERNELARCH=arm64
-			CROSS=aarch64-linux-gnu-
-			;;
-		riscv32)
-			# needs gcc-riscv64-linux-gnu
-			KERNELARCH=riscv
-			CROSS=riscv64-linux-gnu-
-			;;
-		riscv64)
-			# needs gcc-riscv64-linux-gnu
-			KERNELARCH=riscv
-			CROSS=riscv64-linux-gnu-
-			;;
-		*)
-			echo "unsupported architecture $1"
-			exit 1
-			;;
-	esac
+	create_build_env $1
 
 	if [ "$2" = "all" ]; then
 		make ARCH=$KERNELARCH CROSS_COMPILE=$CROSS O=_build-$1 -j8 dtbs
@@ -199,30 +166,7 @@ build_dtbscheck() {
 }
 
 build_dtbindingcheck() {
-	case "$1" in
-		arm32)
-			KERNELARCH=arm
-			CROSS=arm-linux-gnueabihf-
-			;;
-		arm64)
-			KERNELARCH=arm64
-			CROSS=aarch64-linux-gnu-
-			;;
-		riscv32)
-			# needs gcc-riscv64-linux-gnu
-			KERNELARCH=riscv
-			CROSS=riscv64-linux-gnu-
-			;;
-		riscv64)
-			# needs gcc-riscv64-linux-gnu
-			KERNELARCH=riscv
-			CROSS=riscv64-linux-gnu-
-			;;
-		*)
-			echo "unsupported architecture $1"
-			exit 1
-			;;
-	esac
+	create_build_env $1
 
 	if [ "$2" = "all" ]; then
 		make ARCH=$KERNELARCH CROSS_COMPILE=$CROSS O=_build-$1 -j8 dt_binding_check
@@ -239,30 +183,7 @@ build_dtbindingcheck() {
 # $2: target build
 #
 find_uboot_soc() {
-	case "$1" in
-		arm32)
-			KERNELARCH=arm
-			CROSS=arm-linux-gnueabihf-
-			;;
-		arm64)
-			KERNELARCH=arm64
-			CROSS=aarch64-linux-gnu-
-			;;
-		riscv32)
-			# needs gcc-riscv64-linux-gnu
-			KERNELARCH=riscv
-			CROSS=riscv64-linux-gnu-
-			;;
-		riscv64)
-			# needs gcc-riscv64-linux-gnu
-			KERNELARCH=riscv
-			CROSS=riscv64-linux-gnu-
-			;;
-		*)
-			echo "unsupported architecture $1"
-			exit 1
-			;;
-	esac
+	create_build_env $1
 
 	for i in $socs; do
 		set +e
@@ -321,31 +242,18 @@ find_uboot_rkexternal() {
 #
 build_uboot() {
 	create_icecc_env
+	create_build_env $1
 
 	case "$1" in
 		arm32)
-			KERNELARCH=arm
-			CROSS=arm-linux-gnueabihf-
 			BL=bl32
 			;;
 		arm64)
+			# For u-boot, arm64 also is arm
 			KERNELARCH=arm
-			CROSS=aarch64-linux-gnu-
 			BL=bl31
 			;;
-		riscv32)
-			# needs gcc-riscv64-linux-gnu
-			KERNELARCH=riscv
-			CROSS=riscv64-linux-gnu-
-			;;
-		riscv64)
-			# needs gcc-riscv64-linux-gnu
-			KERNELARCH=riscv
-			CROSS=riscv64-linux-gnu-
-			;;
 		*)
-			echo "unsupported architecture $1"
-			exit 1
 			;;
 	esac
 
@@ -510,21 +418,17 @@ build_atf() {
 #
 build_opensbi() {
 	create_icecc_env
+	create_build_env $1
 
 	case "$1" in
 		riscv32)
-			# needs gcc-riscv64-linux-gnu
-			KERNELARCH=riscv
-			CROSS=riscv64-linux-gnu-
 			XLEN=32
 			;;
 		riscv64)
-			# needs gcc-riscv64-linux-gnu
-			KERNELARCH=riscv
-			CROSS=riscv64-linux-gnu-
 			XLEN=64
 			;;
 		*)
+			# opensbi is riscv-specific
 			echo "unsupported architecture $1"
 			exit 1
 			;;
@@ -608,30 +512,7 @@ build_optee() {
 # $1: target arch (arm32, arm64)
 #
 clean_kernel() {
-	case "$1" in
-		arm32)
-			KERNELARCH=arm
-			CROSS=arm-linux-gnueabihf-
-			;;
-		arm64)
-			KERNELARCH=arm64
-			CROSS=aarch64-linux-gnu-
-			;;
-		riscv32)
-			# needs gcc-riscv64-linux-gnu
-			KERNELARCH=riscv
-			CROSS=riscv64-linux-gnu-
-			;;
-		riscv64)
-			# needs gcc-riscv64-linux-gnu
-			KERNELARCH=riscv
-			CROSS=riscv64-linux-gnu-
-			;;
-		*)
-			echo "unsupported architecture $1"
-			exit 1
-			;;
-	esac
+	create_build_env $1
 
 	make ARCH=$KERNELARCH CROSS_COMPILE=$CROSS O=_build-$1 clean
 }
@@ -698,33 +579,14 @@ install_setup() {
 #
 install_kernel() {
 	install_setup $1
+	create_build_env $1
 
 	case "$1" in
 		arm32)
-			KERNELARCH=arm
-			CROSS=arm-linux-gnueabihf-
 			KERNELIMAGE=zImage
 			;;
-		arm64)
-			KERNELARCH=arm64
-			CROSS=aarch64-linux-gnu-
-			KERNELIMAGE=Image
-			;;
-		riscv32)
-			# needs gcc-riscv64-linux-gnu
-			KERNELARCH=riscv
-			CROSS=riscv64-linux-gnu-
-			KERNELIMAGE=Image
-			;;
-		riscv64)
-			# needs gcc-riscv64-linux-gnu
-			KERNELARCH=riscv
-			CROSS=riscv64-linux-gnu-
-			KERNELIMAGE=Image
-			;;
 		*)
-			echo "unsupported architecture $1"
-			exit 1
+			KERNELIMAGE=Image
 			;;
 	esac
 
@@ -820,24 +682,19 @@ install_kernel() {
 # 
 install_dtbs() {
 	install_setup $1
+	create_build_env $1
 
 	case "$1" in
 		arm32)
-			KERNELARCH=arm
 			SUBDIR=""
 			;;
 		arm64)
-			KERNELARCH=arm64
 			SUBDIR="*/"
 			;;
 		riscv32)
-			# needs gcc-riscv32-linux-gnu
-			KERNELARCH=riscv
 			SUBDIR="*/"
 			;;
 		riscv64)
-			# needs gcc-riscv64-linux-gnu
-			KERNELARCH=riscv
 			SUBDIR="*/"
 			;;
 		*)
@@ -1269,31 +1126,7 @@ install_uboot_riscv64() {
 #
 install_uboot() {
 	install_setup $1
-
-	case "$1" in
-		arm32)
-			KERNELARCH=arm
-			CROSS=arm-linux-gnueabihf-
-			;;
-		arm64)
-			KERNELARCH=arm64
-			CROSS=aarch64-linux-gnu-
-			;;
-		riscv32)
-			# needs gcc-riscv32-linux-gnu
-			KERNELARCH=riscv
-			CROSS=riscv64-linux-gnu-
-			;;
-		riscv64)
-			# needs gcc-riscv64-linux-gnu
-			KERNELARCH=riscv
-			CROSS=riscv64-linux-gnu-
-			;;
-		*)
-			echo "unsupported architecture $1"
-			exit 1
-			;;
-	esac
+	create_build_env $1
 
 	if [ "x$2" = "x" ]; then
 		conf="*"
@@ -1536,23 +1369,14 @@ install_config() {
 #
 setup_imagedata() {
 	ARCH=$1
+	create_build_env $1
 
 	case "$ARCH" in
 		arm32)
 			KERNELIMAGE=zImage
 			;;
-		arm64)
-			KERNELIMAGE=Image
-			;;
-		riscv32)
-			KERNELIMAGE=Image
-			;;
-		riscv64)
-			KERNELIMAGE=Image
-			;;
 		*)
-			echo "unsupported architecture $1"
-			exit 1
+			KERNELIMAGE=Image
 			;;
 	esac
 
