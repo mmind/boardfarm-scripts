@@ -20,35 +20,40 @@ create_icecc_env() {
 	# Try to calculate a sane number of threads
 	# On its home-IP, there is Ryzen 5900X waiting behind the icecc
 	# scheduler, while "on the road" we don't want to overwhelm the
-	# way smaller x270
+	# way smaller x270. There is also no need to use icecc, if we're
+	# not in the home network.
 	set +e
 	myip=`/sbin/ifconfig | sed -En 's/127.0.0.1//;s/.*inet (addr:)?(([0-9]*\.){3}[0-9]*).*/\2/p' | grep "192.168.137.171"`
 	RET=$?
 	set -e
-	if [ "$RET" = "0" ]; then
+	if [ "$RET" = "0" ] && [ -d /usr/lib/icecc ]; then
 		CC_NUM_THREAD=28
+		export PATH=/usr/lib/icecc/bin:$PATH
 	else
 		CC_NUM_THREAD=4
 	fi
 
-# newer icecc versions seem to be able to handle this automatically now?
-# FIXME: double-check
-#	case "$HOSTARCH" in
-#		x86_64)
-#			ICECC_VERSION=`pwd`/__maintainer-scripts/toolchains/gcc11-amd64-amd64.tar.gz=x86_64-linux-gnu
-#			ICECC_VERSION=$ICECC_VERSION,`pwd`/__maintainer-scripts/toolchains/gcc11-amd64-armhf.tar.gz=arm-linux-gnueabihf
-#			ICECC_VERSION=$ICECC_VERSION,`pwd`/__maintainer-scripts/toolchains/gcc11-amd64-aarch64.tar.gz=aarch64-linux-gnu
-#			ICECC_VERSION=$ICECC_VERSION,`pwd`/__maintainer-scripts/toolchains/gcc11-amd64-riscv64.tar.gz=riscv64-linux-gnu
-#			;;
-#		aarch64)
-#			ICECC_VERSION=`pwd`/__maintainer-scripts/toolchains/gcc10-aarch64.tar.gz
-#			ICECC_VERSION=$ICECC_VERSION,`pwd`/__maintainer-scripts/toolchains/gcc10-armhf.tar.gz=arm-linux-gnueabihf
-#			;;
-#		*)
-#			echo "unsupported host architecture $HOSTARCH"
-#			exit 1
-#			;;
-#	esac
+	# Originally, this contained code to specify prebuilt compiler
+	# packages for cross compile builds, that icecc was supposed to
+	# distribute upon initial startup.
+	# This is clumsy and also prone to not working, when the system
+	# compiler changes, or some other hickup happens.
+	# It is way easier, to just create additional symlinks in
+	# /usr/lib/icecc/bin for the additionally install cross-compilers.
+	# For example having the /usr/lib/icecc/bin looks like
+	#
+	# aarch64-linux-gnu-g++ -> ../../../bin/icecc
+	# aarch64-linux-gnu-gcc -> ../../../bin/icecc
+	# arm-linux-gnueabihf-g++ -> ../../../bin/icecc
+	# arm-linux-gnueabihf-gcc -> ../../../bin/icecc
+	# c++ -> ../../../bin/icecc
+	# cc -> ../../../bin/icecc
+	# clang -> ../../../bin/icecc
+	# clang++ -> ../../../bin/icecc
+	# g++ -> ../../../bin/icecc
+	# gcc -> ../../../bin/icecc
+	#
+	# makes icecc handle everything by itself.
 }
 
 #
@@ -61,7 +66,6 @@ create_icecc_env() {
 #
 build_kernel() {
 	create_icecc_env
-	export ICECC_VERSION
 
 	case "$1" in
 		arm32)
@@ -96,11 +100,6 @@ build_kernel() {
 		conf="oldconfig"
 	else
 		conf=$2
-	fi
-
-	if [ -d /usr/lib/icecc ] && [ -f __maintainer-scripts/toolchains/gcc11-amd64-amd64.tar.gz ]; then
-		echo "using icecc"
-		export PATH=/usr/lib/icecc/bin:$PATH
 	fi
 
 	make ARCH=$KERNELARCH CROSS_COMPILE=$CROSS KCPPFLAGS="-fno-pic -Wno-pointer-sign" O=_build-$1 $conf
@@ -323,7 +322,6 @@ find_uboot_rkexternal() {
 #
 build_uboot() {
 	create_icecc_env
-	export ICECC_VERSION
 
 	case "$1" in
 		arm32)
@@ -351,11 +349,6 @@ build_uboot() {
 			exit 1
 			;;
 	esac
-
-	if [ -d /usr/lib/icecc ] && [ -f __maintainer-scripts/toolchains/gcc11-amd64-amd64.tar.gz ]; then
-		echo "using icecc"
-		export PATH=/usr/lib/icecc/bin:$PATH
-	fi
 
 	if [ ! -d _build-$1 ]; then
 		mkdir _build-$1
@@ -469,7 +462,6 @@ build_uboot() {
 #
 build_atf() {
 	create_icecc_env
-	export ICECC_VERSION
 
 	case "$1" in
 		arm32)
@@ -496,11 +488,6 @@ build_atf() {
 		conf=$2
 	fi
 
-	if [ -d /usr/lib/icecc ] && [ -f __maintainer-scripts/toolchains/gcc11-amd64-amd64.tar.gz ]; then
-		echo "using icecc"
-		export PATH=/usr/lib/icecc/bin:$PATH
-	fi
-
 	for p in $PLATS; do
 		if [ "$conf" != "*" ] && [ "$conf" != "$p" ]; then
 			echo "$p: skipping build"
@@ -524,7 +511,6 @@ build_atf() {
 #
 build_opensbi() {
 	create_icecc_env
-	export ICECC_VERSION
 
 	case "$1" in
 		riscv32)
@@ -544,11 +530,6 @@ build_opensbi() {
 			exit 1
 			;;
 	esac
-
-	if [ -d /usr/lib/icecc ] && [ -f __maintainer-scripts/toolchains/gcc11-amd64-amd64.tar.gz ]; then
-		echo "using icecc"
-		export PATH=/usr/lib/icecc/bin:$PATH
-	fi
 
 	if [ ! -d _build-$1 ]; then
 		mkdir _build-$1
@@ -587,7 +568,6 @@ build_opensbi() {
 #
 build_optee() {
 	create_icecc_env
-	export ICECC_VERSION
 
 	case "$1" in
 		arm32)
@@ -610,11 +590,6 @@ build_optee() {
 		conf="*"
 	else
 		conf=$2
-	fi
-
-	if [ -d /usr/lib/icecc ] && [ -f __maintainer-scripts/toolchains/gcc11-amd64-amd64.tar.gz ]; then
-		echo "using icecc"
-		export PATH=/usr/lib/icecc/bin:$PATH
 	fi
 
 	for p in $PLATS; do
