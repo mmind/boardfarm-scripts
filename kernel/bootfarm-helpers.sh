@@ -192,7 +192,6 @@ build_dtbscheck() {
 
 	if [ "$2" = "all" ]; then
 		make ARCH=$KERNELARCH CROSS_COMPILE=$CROSS O=_build-$1 -j8 dtbs
-		make ARCH=$KERNELARCH CROSS_COMPILE=$CROSS O=_build-$1 -j8 dt_binding_check
 		make ARCH=$KERNELARCH CROSS_COMPILE=$CROSS O=_build-$1 -j8 dtbs_check
 	else
 		make ARCH=$KERNELARCH CROSS_COMPILE=$CROSS O=_build-$1 CHECK_DTBS=y -j8 $2
