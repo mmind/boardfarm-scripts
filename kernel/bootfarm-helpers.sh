@@ -3,11 +3,11 @@ bootfarmip=192.168.140.1
 
 # supported atf platforms
 atf32="rk3288"
-atf64="px30 rk3328 rk3368 rk3399 rk3568 rk3588"
+atf64="px30 rk3328 rk3368 rk3399 rk3568 rk3576 rk3588"
 
 # supported optee platforms
 optee32="rk322x"
-optee64="px30 rk3399"
+optee64="px30 rk3399 rk3588"
 
 # supported socs for uboot architecture selection for mkimage
 socs="rk3036 rk3066a rk3188 $atf32 $atf64"
