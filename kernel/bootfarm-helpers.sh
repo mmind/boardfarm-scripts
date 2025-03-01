@@ -684,28 +684,9 @@ install_dtbs() {
 	install_setup $1
 	create_build_env $1
 
-	case "$1" in
-		arm32)
-			SUBDIR=""
-			;;
-		arm64)
-			SUBDIR="*/"
-			;;
-		riscv32)
-			SUBDIR="*/"
-			;;
-		riscv64)
-			SUBDIR="*/"
-			;;
-		*)
-			echo "unsupported architecture $1"
-			exit 1
-			;;
-	esac
-
 	pattern=""
 	for i in $2; do
-		pattern="$pattern _build-$1/arch/$KERNELARCH/boot/dts/$SUBDIR$i*"
+		pattern="$pattern _build-$1/arch/$KERNELARCH/boot/dts/*/$i*"
 	done
 
 	if [ -f _bootfarm/$1/dtbs-$1.tar.gz ]; then
